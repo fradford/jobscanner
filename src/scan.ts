@@ -25,6 +25,13 @@ function limitMatches(matches: JobMatch[], maxResults?: number): JobMatch[] {
   return matches.slice(0, maxResults);
 }
 
+/*
+  Scans all enabled sources from the given config file.
+
+  return:
+  - matches: ranked job matches
+  - failures: collected source fetching failures
+*/
 export async function runScan(config: JobScannerConfig): Promise<ScanResult> {
   const sources = config.sources.filter((source) => source.enabled);
   if (sources.length === 0) throw new Error("No sources enabled!");

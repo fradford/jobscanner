@@ -6,7 +6,7 @@ function lineForMatch(match: JobMatch, index: number): string {
     match.matchedKeywords.length > 0
       ? match.matchedKeywords.join(", ")
       : "none";
-  return `${index + 1}. [${match.score}] ${posting.title} @ ${posting.company}\n   ${posting.location ?? "Unknown location"} | ${posting.url}\n   matched: ${keywords}`;
+  return `${index + 1}. [Score: ${match.score}] ${posting.title} @ ${posting.company}\n   ${posting.location ?? "Unknown location"} | ${posting.url}\n   matched: ${keywords}`;
 }
 
 export function formatScanResult(scan: ScanResult): string {

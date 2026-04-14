@@ -8,6 +8,22 @@ yargs(hideBin(process.argv))
   .scriptName("jobscanner")
   .usage("$0 <cmd> [args]")
   .command(
+    "scan",
+    "Run job search pipeline",
+    (command) =>
+      command.option("config", {
+        type: "string",
+        default: "config.yaml",
+        describe: "Path to config file (yaml|yml)",
+      }),
+    async (argv) => {
+      const config = await loadConfig(argv.config);
+      const result = await runScan(config);
+
+      console.log(formatScanResult(result));
+    },
+  )
+  .command(
     "validate",
     "Validates a config file and prints all resolved sources",
     (command) =>
@@ -26,22 +42,6 @@ yargs(hideBin(process.argv))
         .join("\n");
       console.log(`Valid config (${argv.config})`);
       console.log(`Sources (${config.sources.length}):\n${sourceSummary}`);
-    },
-  )
-  .command(
-    "scan",
-    "Run job search pipeline",
-    (command) =>
-      command.option("config", {
-        type: "string",
-        default: "config.yaml",
-        describe: "Path to config file (yaml|yml)",
-      }),
-    async (argv) => {
-      const config = await loadConfig(argv.config);
-      const result = await runScan(config);
-
-      console.log(formatScanResult(result));
     },
   )
   .demandCommand(1, "Provide a command!")

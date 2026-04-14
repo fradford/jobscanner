@@ -8,9 +8,9 @@ function detectWorkMode(posting: JobPosting): WorkMode {
     .toLowerCase();
   if (combined.includes("remote")) return "remote";
   if (combined.includes("hybrid")) return "hybrid";
-  if (combined.includes("on-site") || combined.includes("onsite"))
-    return "onsite";
-  return "unknown";
+
+  // assume the job is on-site in the absence of "remote" or "hybrid"
+  return "onsite";
 }
 
 function normalizeWords(input: string): string {
@@ -75,7 +75,7 @@ export function scorePosting(
       ? query.locations.some((location) =>
           haystack.includes(location.toLowerCase()),
         )
-        ? 3
+        ? 5
         : 0
       : 0;
 
@@ -87,7 +87,7 @@ export function scorePosting(
     score,
     matchedKeywords,
     filtered,
-    filterReason: filtered ? "no include keyword matched" : undefined,
+    filterReason: filtered ? "no keyword matches" : undefined,
   };
 }
 
