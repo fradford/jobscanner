@@ -11,7 +11,7 @@ const DEFAULT_REQUEST: Required<RequestConfig> = {
 export function createFetchContext(
   requestConfig?: RequestConfig,
 ): FetchContext {
-  const request = { ...DEFAULT_REQUEST, requestConfig };
+  const request = { ...DEFAULT_REQUEST, ...requestConfig };
   let lastRequestAt = 0;
 
   const applyThrottle = async (): Promise<void> => {

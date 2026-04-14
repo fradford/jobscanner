@@ -26,3 +26,11 @@ bun install
 - `validate` - checks the config file for correctness
   - options:
   - `--config <config-file-path>` - specify the path to the config file (default: config.yaml)
+
+## Testing
+
+```bash
+bun test
+```
+
+Tests are stored in the top-level `tests/` folder.
