@@ -1,0 +1,34 @@
+query:
+  includeKeywords:
+    - software engineer
+    - software developer
+    - frontend
+    - backend
+    - typescript
+    - junior
+  excludeKeywords:
+    - staff
+  locations:
+    - remote
+    - canada
+    - fredericton
+    - new brunswick
+    - nb
+    - ca
+  remoteOnly: false
+  minSalary: 60000
+
+request:
+  timeoutMs: 15000
+  throttleMs: 300
+  maxPages: 5
+  userAgent: "jobscanner/0.1"
+
+output:
+  format: table
+  maxResults: 50
+
+sources:
+  - type: greenhouse
+    boardToken: anthropic
+    enabled: true
