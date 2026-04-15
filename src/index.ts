@@ -3,6 +3,7 @@ import { hideBin } from "yargs/helpers";
 import { loadConfig } from "./parse-config";
 import { runScan } from "./scan";
 import { formatScanResult } from "./util/format";
+import { recordMatches } from "./util/dump";
 
 yargs(hideBin(process.argv))
   .scriptName("jobscanner")
@@ -11,14 +12,22 @@ yargs(hideBin(process.argv))
     "scan",
     "Run job search pipeline",
     (command) =>
-      command.option("config", {
-        type: "string",
-        default: "config.yaml",
-        describe: "Path to config file (yaml|yml)",
-      }),
+      command
+        .option("config", {
+          type: "string",
+          default: "config.yaml",
+          describe: "Path to config file (yaml|yml)",
+        })
+        .option("matchespath", {
+          type: "string",
+          default: "data/matches.json",
+          describe: "Path to matches tracker file (json)",
+        }),
     async (argv) => {
       const config = await loadConfig(argv.config);
       const result = await runScan(config);
+
+      recordMatches(result.matches, argv.matchespath);
 
       console.log(formatScanResult(result));
     },

@@ -1,33 +1,57 @@
-import type { GreenhouseSourceConfig, JobPosting } from "../types";
+import type { Currency, GreenhouseSourceConfig, JobPosting } from "../types";
 import type { SourceAdapter } from "./types";
 
-interface GreenhouseResponse {
+interface GreenhouseJobsDTO {
   jobs: Array<{
     id: number;
-    title: string;
-    location?: { name?: string };
-    absolute_url: string;
-    updated_at?: string;
-    content?: string;
+  }>;
+}
+
+interface GreenhouseJobDetailsDTO {
+  id: number;
+  title: string;
+  location: { name: string };
+  absolute_url: string;
+  updated_at: string;
+  content: string;
+  pay_input_ranges: Array<{
+    min_cents: number;
+    max_cents: number;
+    currency_type: string;
   }>;
 }
 
 export const greenhouseAdapter: SourceAdapter<GreenhouseSourceConfig> = {
   type: "greenhouse",
   async fetchJobs(source, context): Promise<JobPosting[]> {
-    const url = `https://boards-api.greenhouse.io/v1/boards/${source.boardToken}/jobs?content=true`;
-    const payload = await context.fetchJson<GreenhouseResponse>(url);
+    // greenhouse api has list endpoint plus detailed endpoint, salary range is optional on detailed endpoint, not included in list
+    // will have to send a request for each job which is where throttling comes in so we don't get blocked
+    const url = `https://boards-api.greenhouse.io/v1/boards/${source.boardToken}/jobs`;
+    const payload = await context.fetchJson<GreenhouseJobsDTO>(url);
 
-    return payload.jobs.map((job) => ({
-      sourceId: source.id,
-      sourceType: "greenhouse",
-      externalId: String(job.id),
-      title: job.title,
-      company: source.boardToken,
-      location: job.location?.name,
-      workMode: "unknown",
-      url: job.absolute_url,
-      postedAt: job.updated_at,
-    }));
+    return await Promise.all(
+      payload.jobs.map(async (job) => {
+        const url = `https://boards-api.greenhouse.io/v1/boards/${source.boardToken}/jobs/${job.id}?pay_transparency=true`;
+
+        const jobDetails =
+          await context.fetchJson<GreenhouseJobDetailsDTO>(url);
+        return {
+          sourceId: source.id,
+          sourceType: "greenhouse",
+          externalId: String(job.id),
+          title: jobDetails.title,
+          company: source.company,
+          location: jobDetails.location?.name,
+          workMode: "unknown",
+          salaryBands: jobDetails.pay_input_ranges.map((band) => ({
+            bottom: Math.floor(band.min_cents / 100),
+            top: Math.floor(band.max_cents / 100),
+            currency: band.currency_type as Currency,
+          })),
+          url: jobDetails.absolute_url,
+          description: jobDetails.content,
+        };
+      }),
+    );
   },
 };

@@ -21,7 +21,7 @@ export const staticAdapter: SourceAdapter<StaticSourceConfig> = {
         sourceType: "static",
         externalId: `${source.id}:${index}:${url}`,
         title,
-        company: source.company ?? new URL(source.url).hostname,
+        company: source.company,
         location: source.locationSelector
           ? root.find(source.locationSelector).first().text().trim() ||
             undefined

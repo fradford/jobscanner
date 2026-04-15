@@ -1,5 +1,51 @@
-import type { JobMatch, JobPosting, QueryConfig, WorkMode } from "./types";
+import type {
+  Currency,
+  JobMatch,
+  JobPosting,
+  QueryConfig,
+  SalaryBand,
+  WorkMode,
+} from "./types";
 
+const LOCATION_CURRENCY_MAP: Record<string, Currency> = {
+  // Countries
+  "united states": "USD",
+  usa: "USD",
+  us: "USD",
+  canada: "CAD",
+  "united kingdom": "GBP",
+  uk: "GBP",
+  australia: "AUD",
+  "new zealand": "NZD",
+  "european union": "EUR",
+  eu: "EUR",
+
+  // Cities
+  "san francisco": "USD",
+  "new york city": "USD",
+  nyc: "USD",
+  london: "GBP",
+  toronto: "CAD",
+  vancouver: "CAD",
+  sydney: "AUD",
+  melbourne: "AUD",
+};
+
+function mapCountryCode(location: string): Currency {
+  const lower = location.toLowerCase();
+
+  for (const key of Object.keys(LOCATION_CURRENCY_MAP)) {
+    if (lower.includes(key)) {
+      return LOCATION_CURRENCY_MAP[key] as Currency;
+    }
+  }
+
+  return "unknown";
+}
+
+/*
+  If the adapter didn't include workMode, we can try to detect it from the job description
+*/
 function detectWorkMode(posting: JobPosting): WorkMode {
   if (posting.workMode !== "unknown") return posting.workMode;
   const combined = [posting.title, posting.location, posting.description]
@@ -13,8 +59,75 @@ function detectWorkMode(posting: JobPosting): WorkMode {
   return "onsite";
 }
 
-function normalizeWords(input: string): string {
-  return input.toLowerCase();
+/*
+  If the adapter didn't find salary info, we can try to detect it from the job description
+*/
+function detectSalary(posting: JobPosting): SalaryBand | undefined {
+  const combined = [posting.title, posting.description]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  const salaryRegex = /\$(?<min>[\d,]+)\s*[-–—]\s*\$(?<max>[\d,]+)/;
+  const currencyRegex = /\b(?<currency>USD|CAD|EUR|GBP|AUD|NZD)\b/;
+
+  const salaryMatch = combined.match(salaryRegex);
+
+  const minSalary = parseInt(
+    salaryMatch?.groups?.min ? salaryMatch.groups.min.replace(/,/g, "") : "0",
+  );
+  const maxSalary = parseInt(
+    salaryMatch?.groups?.max ? salaryMatch.groups.max.replace(/,/g, "") : "0",
+  );
+
+  let currency = (combined.match(currencyRegex)?.groups?.currency ??
+    "unknown") as Currency;
+  if (currency === "unknown") {
+    currency = mapCountryCode(posting.location ?? "");
+  }
+
+  // if we found some salary data, return a SalaryBand
+  if (minSalary !== 0 && maxSalary !== 0) {
+    return {
+      bottom: minSalary,
+      top: maxSalary,
+      currency,
+    };
+  }
+
+  return undefined;
+}
+
+function getPreferredCurrencySalary(
+  salaryBands: SalaryBand[] | undefined,
+  priorityCurrency: Currency,
+): SalaryBand | undefined {
+  // try to find a salary range with the priority_currency, if not available, return any Currency
+  if (typeof salaryBands === "undefined" || salaryBands.length === 0)
+    return undefined;
+
+  const priorityRanges = salaryBands.filter(
+    (r) => r.currency === priorityCurrency,
+  );
+  if (priorityRanges.length !== 0) {
+    return {
+      bottom: Math.min(...priorityRanges.map((x) => x.bottom)),
+      top: Math.max(...priorityRanges.map((x) => x.top)),
+      currency: priorityCurrency,
+    };
+  }
+
+  // find pay range for first available currency
+  const available_currency = salaryBands[0]?.currency;
+  const availableRanges = salaryBands.filter(
+    (r) => r.currency === available_currency,
+  );
+
+  return {
+    bottom: Math.min(...availableRanges.map((x) => x.bottom)),
+    top: Math.max(...availableRanges.map((x) => x.top)),
+    currency: available_currency ?? "unknown",
+  };
 }
 
 export function scorePosting(
@@ -22,14 +135,29 @@ export function scorePosting(
   query: QueryConfig,
 ): JobMatch {
   const workMode = detectWorkMode(posting);
-  const haystack = normalizeWords(
-    [posting.title, posting.company, posting.location, posting.description]
-      .filter(Boolean)
-      .join(" "),
-  );
 
-  const includeKeywords = query.includeKeywords.map(normalizeWords);
-  const excludeKeywords = (query.excludeKeywords ?? []).map(normalizeWords);
+  if (
+    typeof posting.salaryBands === "undefined" ||
+    posting.salaryBands.length === 0
+  ) {
+    const inferredBand = detectSalary(posting);
+    posting.salaryBands = inferredBand ? [inferredBand] : undefined;
+  }
+
+  const haystack = [
+    posting.title,
+    posting.company,
+    posting.location,
+    posting.description,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  const includeKeywords = query.includeKeywords.map((x) => x.toLowerCase());
+  const excludeKeywords = (query.excludeKeywords ?? []).map((x) =>
+    x.toLowerCase(),
+  );
   const matchedKeywords = includeKeywords.filter((keyword) =>
     haystack.includes(keyword),
   );
@@ -56,18 +184,20 @@ export function scorePosting(
     };
   }
 
-  if (
-    query.minSalary !== undefined &&
-    posting.salaryRangeMax !== undefined &&
-    posting.salaryRangeMax < query.minSalary
-  ) {
-    return {
-      posting: { ...posting, workMode },
-      score: -100,
-      matchedKeywords,
-      filtered: true,
-      filterReason: `max salary below ${query.minSalary}`,
-    };
+  if (query.minSalary !== undefined && query.preferredCurrency !== undefined) {
+    const salaryBand = getPreferredCurrencySalary(
+      posting.salaryBands,
+      query.preferredCurrency,
+    );
+
+    if (salaryBand !== undefined && salaryBand.top < query.minSalary)
+      return {
+        posting: { ...posting, workMode },
+        score: -100,
+        matchedKeywords,
+        filtered: true,
+        filterReason: `max salary below ${query.minSalary}`,
+      };
   }
 
   const locationBonus =

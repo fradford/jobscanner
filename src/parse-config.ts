@@ -1,12 +1,22 @@
 import { file } from "bun";
 import { parse as parseYaml } from "yaml";
 import type {
+  Currency,
   JobScannerConfig,
   JobSourceConfig,
   OutputConfig,
   QueryConfig,
   RequestConfig,
 } from "./types";
+import {
+  asBoolean,
+  asOptionalBoolean,
+  asOptionalNumber,
+  asOptionalString,
+  asString,
+  asStringArray,
+  isRecord,
+} from "./util/type-utils";
 
 const SOURCE_TYPES = new Set(["greenhouse", "static"]);
 
@@ -33,80 +43,23 @@ export function parseConfig(configString: string): JobScannerConfig {
   };
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-function asString(value: unknown, field: string): string {
-  if (typeof value !== "string" || value.trim().length === 0) {
-    throw new Error(`Invalid config: "${field}" must be a non-empty string.`);
-  }
-  return value.trim();
-}
-
-function asBoolean(value: unknown, field: string): boolean {
-  if (typeof value !== "boolean") {
-    throw new Error(`Invalid config: "${field}" must be a boolean.`);
-  }
-  return value;
-}
-
-function asOptionalString(value: unknown, field: string): string | undefined {
-  if (value === undefined) return undefined;
-  return asString(value, field);
-}
-
-function asOptionalBoolean(value: unknown, field: string): boolean | undefined {
-  if (value === undefined) return undefined;
-  if (typeof value !== "boolean") {
-    throw new Error(`Invalid config: "${field}" must be a boolean.`);
-  }
-  return value;
-}
-
-function asOptionalNumber(value: unknown, field: string): number | undefined {
-  if (value === undefined) return undefined;
-  if (typeof value !== "number" || Number.isNaN(value)) {
-    throw new Error(`Invalid config: "${field}" must be a number.`);
-  }
-  return value;
-}
-
-function asStringArray(
-  value: unknown,
-  field: string,
-  required = false,
-): string[] {
-  if (value === undefined) {
-    if (required) throw new Error(`Invalid config: "${field}" is required.`);
-    return [];
-  }
-  if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) {
-    throw new Error(`Invalid config: "${field}" must be an array of strings.`);
-  }
-  return value.map((item) => item.trim()).filter(Boolean);
-}
-
 function parseQuery(value: unknown): QueryConfig {
   if (!isRecord(value))
     throw new Error("Invalid config: invalid query object.");
 
-  const includeKeywords = asStringArray(
-    value.includeKeywords,
-    "query.includeKeywords",
-    true,
-  );
+  const includeKeywords = asStringArray(value.includeKeywords);
   if (includeKeywords.length === 0)
     throw new Error(
       'Invalid config: "query.includeKeywords" must contain at least one keyword.',
     );
 
-  const excludeKeywords = asStringArray(
-    value.excludeKeywords,
-    "query.excludeKeywords",
-  );
-  const locations = asStringArray(value.locations, "query.locations");
-  const remoteOnly = asOptionalBoolean(value.remoteOnly, "query.remoteOnly");
-  const minSalary = asOptionalNumber(value.minSalary, "query.minSalary");
+  const excludeKeywords = asStringArray(value.excludeKeywords);
+  const locations = asStringArray(value.locations);
+  const remoteOnly = asOptionalBoolean(value.remoteOnly);
+  const minSalary = asOptionalNumber(value.minSalary);
+  const preferredCurrency = asOptionalString(
+    value.preferredCurrency,
+  ) as Currency;
 
   return {
     includeKeywords,
@@ -114,6 +67,7 @@ function parseQuery(value: unknown): QueryConfig {
     locations: locations.length > 0 ? locations : undefined,
     remoteOnly,
     minSalary,
+    preferredCurrency,
   };
 }
 
@@ -123,10 +77,10 @@ function parseRequest(value: unknown): RequestConfig | undefined {
     throw new Error("Invalid config: invalid request object.");
 
   return {
-    timeoutMs: asOptionalNumber(value.timeoutMs, "request.timeoutMs"),
-    throttleMs: asOptionalNumber(value.throttleMs, "request.throttleMs"),
-    userAgent: asOptionalString(value.userAgent, "request.userAgent"),
-    maxPages: asOptionalNumber(value.maxPages, "request.maxPages"),
+    timeoutMs: asOptionalNumber(value.timeoutMs),
+    throttleMs: asOptionalNumber(value.throttleMs),
+    userAgent: asOptionalString(value.userAgent),
+    maxPages: asOptionalNumber(value.maxPages),
   };
 }
 
@@ -136,7 +90,7 @@ function parseOutput(value: unknown): OutputConfig | undefined {
     throw new Error("Invalid config: invalid output object.");
 
   return {
-    maxResults: asOptionalNumber(value.maxResults, "output.maxResults"),
+    maxResults: asOptionalNumber(value.maxResults),
   };
 }
 
@@ -162,15 +116,16 @@ function parseSource(value: unknown, index: number): JobSourceConfig {
   if (!isRecord(value))
     throw new Error(`Invalid config: sources[${index}] is invalid.`);
 
-  const sourceType = asString(value.type, `sources[${index}].type`);
+  const sourceType = asString(value.type);
   if (!SOURCE_TYPES.has(sourceType))
     throw new Error(
       `Invalid config: unsupported source type "${sourceType} at sources[${index}].type.`,
     );
 
   const base = {
-    id: asOptionalString(value.id, `sources[${index}].id`),
-    enabled: asBoolean(value.enabled, `sources[${index}].enabled`),
+    id: asOptionalString(value.id),
+    company: asString(value.company),
+    enabled: asBoolean(value.enabled),
   };
 
   switch (sourceType) {
@@ -178,34 +133,18 @@ function parseSource(value: unknown, index: number): JobSourceConfig {
       return withSourceId({
         ...base,
         type: "greenhouse",
-        boardToken: asString(value.boardToken, `sources[${index}].boardToken`),
+        boardToken: asString(value.boardToken),
       });
     default:
       return withSourceId({
         ...base,
         type: "static",
-        url: asString(value.url, `sources[${index}].url`),
-        listingSelector: asString(
-          value.listingSelector,
-          `sources[${index}].listingSelector`,
-        ),
-        titleSelector: asString(
-          value.titleSelector,
-          `sources[${index}].titleSelector`,
-        ),
-        company: asOptionalString(value.company, `sources[${index}].company`),
-        locationSelector: asOptionalString(
-          value.locationSelector,
-          `sources[${index}].locationSelector`,
-        ),
-        descriptionSelector: asOptionalString(
-          value.descriptionSelector,
-          `sources[${index}].descriptionSelector`,
-        ),
-        linkSelector: asString(
-          value.linkSelector,
-          `sources[${index}].linkSelector`,
-        ),
+        url: asString(value.url),
+        listingSelector: asString(value.listingSelector),
+        titleSelector: asString(value.titleSelector),
+        locationSelector: asOptionalString(value.locationSelector),
+        descriptionSelector: asOptionalString(value.descriptionSelector),
+        linkSelector: asString(value.linkSelector),
       });
   }
 }
