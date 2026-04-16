@@ -1,10 +1,11 @@
 import { dispatchAdapter } from "./adapters";
 import { rankPostings } from "./matching";
-import type {
-  ScanResult,
-  JobScannerConfig,
-  JobPosting,
-  JobMatch,
+import {
+  type ScanResult,
+  type JobScannerConfig,
+  type JobPosting,
+  type JobMatch,
+  AllSourcesFailedError,
 } from "./types";
 import { createFetchContext } from "./util/context";
 
@@ -50,14 +51,21 @@ export async function runScan(config: JobScannerConfig): Promise<ScanResult> {
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unknown source failure";
-        failures.push({ sourceId: source.id, message });
+        const trace = error instanceof Error ? error.stack : undefined;
+        failures.push({
+          sourceId: source.id,
+          message,
+          timestamp: new Date(),
+          trace,
+        });
       }
     }),
   );
 
   if (allPostings.length === 0 && failures.length > 0) {
-    throw new Error(
+    throw new AllSourcesFailedError(
       `All sources failed:\n${failures.map((f) => `- ${f.sourceId}: ${f.message}`).join("\n")}`,
+      failures,
     );
   }
 

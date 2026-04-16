@@ -1,5 +1,6 @@
-import type { Currency, GreenhouseSourceConfig, JobPosting } from "../types";
+import type { GreenhouseSourceConfig, JobPosting } from "../types";
 import type { SourceAdapter } from "./types";
+import cc, { type CurrencyCodeRecord } from "currency-codes";
 
 interface GreenhouseJobsDTO {
   jobs: Array<{
@@ -46,7 +47,7 @@ export const greenhouseAdapter: SourceAdapter<GreenhouseSourceConfig> = {
           salaryBands: jobDetails.pay_input_ranges.map((band) => ({
             bottom: Math.floor(band.min_cents / 100),
             top: Math.floor(band.max_cents / 100),
-            currency: band.currency_type as Currency,
+            currency: cc.code(band.currency_type) as CurrencyCodeRecord,
           })),
           url: jobDetails.absolute_url,
           description: jobDetails.content,

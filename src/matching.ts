@@ -1,46 +1,21 @@
 import type {
-  Currency,
   JobMatch,
   JobPosting,
   QueryConfig,
   SalaryBand,
   WorkMode,
 } from "./types";
+import cc, { type CurrencyCodeRecord } from "currency-codes";
 
-const LOCATION_CURRENCY_MAP: Record<string, Currency> = {
-  // Countries
-  "united states": "USD",
-  usa: "USD",
-  us: "USD",
-  canada: "CAD",
-  "united kingdom": "GBP",
-  uk: "GBP",
-  australia: "AUD",
-  "new zealand": "NZD",
-  "european union": "EUR",
-  eu: "EUR",
-
-  // Cities
-  "san francisco": "USD",
-  "new york city": "USD",
-  nyc: "USD",
-  london: "GBP",
-  toronto: "CAD",
-  vancouver: "CAD",
-  sydney: "AUD",
-  melbourne: "AUD",
-};
-
-function mapCountryCode(location: string): Currency {
+function mapCountryCode(location: string): CurrencyCodeRecord | undefined {
   const lower = location.toLowerCase();
 
-  for (const key of Object.keys(LOCATION_CURRENCY_MAP)) {
-    if (lower.includes(key)) {
-      return LOCATION_CURRENCY_MAP[key] as Currency;
+  for (const country of cc.countries()) {
+    if (lower.includes(country)) {
+      // probably safe to assume the first currency is the most relevant
+      return cc.country(country)[0] as CurrencyCodeRecord;
     }
   }
-
-  return "unknown";
 }
 
 /*
@@ -62,53 +37,69 @@ function detectWorkMode(posting: JobPosting): WorkMode {
 /*
   If the adapter didn't find salary info, we can try to detect it from the job description
 */
-function detectSalary(posting: JobPosting): SalaryBand | undefined {
+function detectSalary(posting: JobPosting): SalaryBand[] {
   const combined = [posting.title, posting.description]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
 
-  const salaryRegex = /\$(?<min>[\d,]+)\s*[-–—]\s*\$(?<max>[\d,]+)/;
+  const salaryRegex =
+    /(?:salary|compensation|pay|wage|rate)[^\n]{0,60}(?<min>[\d,]+)\s*[-–—]\s*(?<max>[\d,]+)/gi;
   const currencyRegex = /\b(?<currency>USD|CAD|EUR|GBP|AUD|NZD)\b/;
 
-  const salaryMatch = combined.match(salaryRegex);
+  const matches = [...combined.matchAll(salaryRegex)];
+  const ranges = matches.map((match) => ({
+    min: parseInt(match.groups?.min?.replace(/,/g, "") ?? "0"),
+    max: parseInt(match.groups?.max?.replace(/,/g, "") ?? "0"),
+  }));
 
-  const minSalary = parseInt(
-    salaryMatch?.groups?.min ? salaryMatch.groups.min.replace(/,/g, "") : "0",
-  );
-  const maxSalary = parseInt(
-    salaryMatch?.groups?.max ? salaryMatch.groups.max.replace(/,/g, "") : "0",
-  );
+  // detecting currency is a bit tricky, approach here is to first look for a standard currency code (eg USD, CAD)
+  // and if we don't find one, look for a country name anywhere in the job posting and guess currency based on that
+  // there's a chance this still misses, some postings only list city and state and assume you know the country
+  let currency = cc.code(combined.match(currencyRegex)?.groups?.currency ?? "");
+  if (typeof currency === "undefined") {
+    const haystack = [
+      posting.title,
+      posting.company,
+      posting.location,
+      posting.description,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
 
-  let currency = (combined.match(currencyRegex)?.groups?.currency ??
-    "unknown") as Currency;
-  if (currency === "unknown") {
-    currency = mapCountryCode(posting.location ?? "");
+    for (const country of cc.countries()) {
+      if (haystack?.includes(country)) {
+        // probably safe to assume the first currency is the most relevant
+        currency = cc.country(country)[0];
+      }
+    }
   }
 
-  // if we found some salary data, return a SalaryBand
-  if (minSalary !== 0 && maxSalary !== 0) {
-    return {
-      bottom: minSalary,
-      top: maxSalary,
-      currency,
-    };
-  }
+  // if we couldn't find a currency, ranges are probably invalid
+  if (typeof currency === "undefined") return [];
 
-  return undefined;
+  return ranges.map((range) => ({
+    bottom: range.min,
+    top: range.max,
+    currency,
+  }));
 }
 
 function getPreferredCurrencySalary(
   salaryBands: SalaryBand[] | undefined,
-  priorityCurrency: Currency,
+  priorityCurrency: CurrencyCodeRecord,
 ): SalaryBand | undefined {
-  // try to find a salary range with the priority_currency, if not available, return any Currency
-  if (typeof salaryBands === "undefined" || salaryBands.length === 0)
-    return undefined;
+  // try to find a salary range with the priorityCurrency, if not available, return any
+  const validSalaryBands =
+    salaryBands?.filter((band) => typeof band.currency !== "undefined") ?? [];
+  if (validSalaryBands.length === 0) return undefined;
 
-  const priorityRanges = salaryBands.filter(
-    (r) => r.currency === priorityCurrency,
+  const priorityRanges = validSalaryBands.filter(
+    (r) => r.currency.code === priorityCurrency.code,
   );
+
+  // we found 1 or more ranges in the target currency, return a combined range for simplicity
   if (priorityRanges.length !== 0) {
     return {
       bottom: Math.min(...priorityRanges.map((x) => x.bottom)),
@@ -117,16 +108,18 @@ function getPreferredCurrencySalary(
     };
   }
 
-  // find pay range for first available currency
-  const available_currency = salaryBands[0]?.currency;
-  const availableRanges = salaryBands.filter(
-    (r) => r.currency === available_currency,
+  // no preferred currency range, find pay range for first available currency
+  const availableCurrency = validSalaryBands[0]?.currency;
+  if (typeof availableCurrency === "undefined") return undefined;
+
+  const availableRanges = validSalaryBands.filter(
+    (r) => r.currency.code === availableCurrency?.code,
   );
 
   return {
     bottom: Math.min(...availableRanges.map((x) => x.bottom)),
     top: Math.max(...availableRanges.map((x) => x.top)),
-    currency: available_currency ?? "unknown",
+    currency: availableCurrency,
   };
 }
 
@@ -140,8 +133,8 @@ export function scorePosting(
     typeof posting.salaryBands === "undefined" ||
     posting.salaryBands.length === 0
   ) {
-    const inferredBand = detectSalary(posting);
-    posting.salaryBands = inferredBand ? [inferredBand] : undefined;
+    const inferredBands = detectSalary(posting);
+    posting.salaryBands = inferredBands;
   }
 
   const haystack = [

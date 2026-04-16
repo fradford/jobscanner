@@ -16,6 +16,7 @@ const baseConfig: JobScannerConfig = {
   },
   sources: [
     {
+      company: "Example Co",
       type: "static",
       id: "static:test",
       enabled: true,
@@ -55,6 +56,6 @@ describe("runScan", () => {
       return new Response("oops", { status: 500, statusText: "Server Error" });
     }) as unknown as typeof fetch;
 
-    await expect(runScan(baseConfig)).rejects.toThrow("All sources failed");
+    expect(runScan(baseConfig)).rejects.toThrow("All sources failed");
   });
 });

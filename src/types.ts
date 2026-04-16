@@ -1,13 +1,7 @@
+import type { CurrencyCodeRecord } from "currency-codes";
+
 // Basic filters
 export type WorkMode = "remote" | "hybrid" | "onsite" | "unknown";
-export type Currency =
-  | "USD"
-  | "CAD"
-  | "GBP"
-  | "EUR"
-  | "AUD"
-  | "NZD"
-  | "unknown";
 
 export interface QueryConfig {
   includeKeywords: string[];
@@ -15,7 +9,7 @@ export interface QueryConfig {
   locations?: string[];
   remoteOnly?: boolean;
   minSalary?: number;
-  preferredCurrency?: Currency;
+  preferredCurrency?: CurrencyCodeRecord;
 }
 
 // Job listing sources
@@ -66,7 +60,7 @@ export interface JobScannerConfig {
 export interface SalaryBand {
   bottom: number;
   top: number;
-  currency: Currency;
+  currency: CurrencyCodeRecord;
 }
 
 // Describes job posting details
@@ -99,9 +93,32 @@ export interface JobMatch {
 export interface SourceFailure {
   sourceId?: string;
   message: string;
+  timestamp: Date;
+  trace?: string;
 }
 
 export interface ScanResult {
   matches: JobMatch[];
   failures: SourceFailure[];
+}
+
+export interface AllSourcesFailedError extends Error {
+  failures: SourceFailure[];
+}
+
+export class AllSourcesFailedError extends Error {
+  constructor(message?: string, failures?: SourceFailure[]) {
+    // 'Error' breaks prototype chain here
+    super(message);
+
+    // restore prototype chain
+    const actualProto = new.target.prototype;
+
+    if (Object.setPrototypeOf) {
+      Object.setPrototypeOf(this, actualProto);
+    }
+
+    this.name = "AllSourcesFailedError";
+    this.failures = failures ?? [];
+  }
 }

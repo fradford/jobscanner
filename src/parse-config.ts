@@ -1,7 +1,6 @@
 import { file } from "bun";
 import { parse as parseYaml } from "yaml";
 import type {
-  Currency,
   JobScannerConfig,
   JobSourceConfig,
   OutputConfig,
@@ -17,6 +16,7 @@ import {
   asStringArray,
   isRecord,
 } from "./util/type-utils";
+import cc, { type CurrencyCodeRecord } from "currency-codes";
 
 const SOURCE_TYPES = new Set(["greenhouse", "static"]);
 
@@ -57,9 +57,7 @@ function parseQuery(value: unknown): QueryConfig {
   const locations = asStringArray(value.locations);
   const remoteOnly = asOptionalBoolean(value.remoteOnly);
   const minSalary = asOptionalNumber(value.minSalary);
-  const preferredCurrency = asOptionalString(
-    value.preferredCurrency,
-  ) as Currency;
+  const preferredCurrency = cc.code(asString(value.preferredCurrency));
 
   return {
     includeKeywords,

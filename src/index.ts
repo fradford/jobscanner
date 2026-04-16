@@ -3,7 +3,8 @@ import { hideBin } from "yargs/helpers";
 import { loadConfig } from "./parse-config";
 import { runScan } from "./scan";
 import { formatScanResult } from "./util/format";
-import { recordMatches } from "./util/dump";
+import { recordFailures, recordMatches } from "./util/logging";
+import { AllSourcesFailedError } from "./types";
 
 yargs(hideBin(process.argv))
   .scriptName("jobscanner")
@@ -18,18 +19,29 @@ yargs(hideBin(process.argv))
           default: "config.yaml",
           describe: "Path to config file (yaml|yml)",
         })
-        .option("matchespath", {
+        .option("logpath", {
           type: "string",
-          default: "data/matches.json",
-          describe: "Path to matches tracker file (json)",
+          default: "logs",
+          describe: "Path to logs directory",
         }),
     async (argv) => {
       const config = await loadConfig(argv.config);
-      const result = await runScan(config);
 
-      recordMatches(result.matches, argv.matchespath);
+      try {
+        const result = await runScan(config);
+        recordMatches(result.matches, argv.logpath);
+        recordFailures(result.failures, argv.logpath);
 
-      console.log(formatScanResult(result));
+        console.log(formatScanResult(result));
+      } catch (error) {
+        if (error instanceof AllSourcesFailedError) {
+          recordFailures(error.failures, argv.logpath);
+        }
+
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`Error: ${message}`);
+        process.exitCode = 1;
+      }
     },
   )
   .command(
