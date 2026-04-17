@@ -1,0 +1,67 @@
+name: John Smith
+title: Software Developer
+address: Toronto, ON, Canada
+summary: >
+  Versatile technology professional with proven experience translating complex technical systems into clear, measurable business outcomes.
+  Hands-on experience analysing workflows, identifying inefficiencies, and delivering solutions that reduce cost and improve reliability.
+  Comfortable working directly with stakeholders, communicating technical concepts to non-technical audiences, and driving projects from
+  discovery through delivery.
+contacts:
+  - john@example.com
+  - (111) 222-3333
+education:
+  - school: University of Toronto
+    degree: BSc. Computer Science
+    graduationYear: 2025
+    gpa: 3.8
+experience:
+  - company: Google
+    position: Software Developer
+    startDate: August 2024
+    endDate: March 2026
+    bullets:
+      - Shipped production features
+      - Identified critical usability gaps
+  - company: Important Startup
+    companyBlurb: Provides AI tools for business to optimize workflows and improve KPIs.
+    position: Junior Software Developer
+    startDate: September 2022
+    endDate: August 2024
+    bullets:
+      - Designed and implemented AI features
+      - Resolved critical issues quickly
+projects:
+  - name: jobscanner
+    description: CLI tool to fetch job postings, used to find the best matches for my skillset and optimize resumes.
+    link: \href{https://github.com/fradford/jobscanner}{github.com/fradford/jobscanner}
+skills:
+  - Documentation
+  - Troubleshooting
+  - Root-cause analysis
+  - Microsoft Office (Word, Powerpoint, Excel)
+  - JIRA
+  - Git
+  - Github
+  - Agile
+  - Scrum
+  - Lean
+  - Microsoft Project
+  - Python
+  - Java
+  - C#
+  - Javascript
+  - Typescript
+  - English (native)
+  - French (basic)
+  - AWS (EC2, S3, Lambda)
+  - Azure
+coreCompetencies:
+  - Data Analysis & Reporting
+  - Stakeholder Communication
+  - Process Improvement
+  - Requirements Gathering
+  - Technical Documentation
+  - Cross-functional Collaboration
+  - Cloud Systems (AWS, Azure)
+  - QA & Testing
+  - Agile/Project Coordination

@@ -9,7 +9,8 @@ import {
   recordMatches,
   recordPostings,
 } from "./util/logging";
-import { AllSourcesFailedError } from "./types";
+import { AllSourcesFailedError, type ResumeSection } from "./types";
+import { buildResume, loadResume } from "./build-resume";
 
 yargs(hideBin(process.argv))
   .scriptName("jobscanner")
@@ -21,7 +22,7 @@ yargs(hideBin(process.argv))
       command
         .option("config", {
           type: "string",
-          default: "config.yaml",
+          default: "config/scan.yaml",
           describe: "Path to config file (yaml|yml)",
         })
         .option("logpath", {
@@ -53,11 +54,11 @@ yargs(hideBin(process.argv))
   )
   .command(
     "validate",
-    "Validates a config file and prints all resolved sources",
+    "Validates the scan settings file and prints detected sources",
     (command) =>
       command.option("config", {
         type: "string",
-        default: "config.yaml",
+        default: "config/scan.yaml",
         describe: "Path to config file (yaml|yml)",
       }),
     async (argv) => {
@@ -70,6 +71,50 @@ yargs(hideBin(process.argv))
         .join("\n");
       console.log(`Valid config (${argv.config})`);
       console.log(`Sources (${config.sources.length}):\n${sourceSummary}`);
+    },
+  )
+  .command(
+    "create <output>",
+    "Creates a customised resume for a matched job",
+    (command) =>
+      command
+        .positional("output", {
+          type: "string",
+          describe: "Output file path, e.g. 'output/example.pdf'",
+        })
+        .option("template", {
+          type: "string",
+          default: "templates/resume.tex",
+          describe:
+            "Path to resume tex template, must define macros as in default file",
+        })
+        .option("resume", {
+          type: "string",
+          default: "config/resume-data.yaml",
+          describe: "Path to structured resume content file (yaml|yml)",
+        })
+        .option("sections", {
+          type: "array",
+          default: [
+            "summary",
+            "coreCompetencies",
+            "experience",
+            "education",
+            "projects",
+            "skills",
+          ],
+          describe: "Customise the included sections (and their order).",
+        }),
+    async (argv) => {
+      if (typeof argv.output === "undefined")
+        throw new Error("Missing positional arument 'output'");
+
+      const resumeData = await loadResume(argv.resume);
+      await buildResume(resumeData, {
+        outputPath: argv.output,
+        sections: argv.sections as ResumeSection[],
+        templatePath: argv.template,
+      });
     },
   )
   .demandCommand(1, "Provide a command!")

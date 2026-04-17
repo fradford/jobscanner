@@ -1,0 +1,78 @@
+\documentclass[10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{kpfonts}
+\usepackage{geometry}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{parskip}
+\usepackage{multicol}
+\usepackage{xparse}
+
+% Page layout
+\geometry{
+	letterpaper,
+	left=0.5in,
+	right=0.5in,
+	top=0.5in,
+	bottom=0.5in
+}
+
+% Styling
+\titleformat{\section}[block]{\large\bfseries\scshape\center}{}{0pt}{}[\vspace{2pt}\titlerule]
+\titlespacing*{\section}{0pt}{10pt}{4pt}
+\frenchspacing
+\flushbottom
+
+\setlength{\parskip}{1pt}
+
+% Custom formatting commands
+\newcommand{\Name}[1]{\begin{center}{\Huge\bfseries #1}\end{center}}
+\NewDocumentCommand{\ContactLine}{m g g g g}{%
+	\begin{center}
+		{
+			\footnotesize
+			#1%
+			\IfValueT{#2}{\quad\textbar\quad #2}%
+			\IfValueT{#3}{\quad\textbar\quad #3}%
+			\IfValueT{#4}{\quad\textbar\quad #4}%
+			\IfValueT{#5}{\quad\textbar\quad #5}%
+		}
+	\end{center}
+}
+
+% Header{Name}{Title}{Address}
+\newcommand{\Header}[3]{
+	\Name{#1}
+	\vspace{5pt}
+	\begin{center}
+		{\small #2} \\
+		{\footnotesize #3}
+	\end{center}
+}
+
+% Education{degree}{school}{date}
+\newcommand{\Education}[3]{\noindent\textbf{#1} \ \textendash\ {\small #2}  \hfill {\small #3}}
+
+% Experience{title}{company}{blurb}{date}{bullets}
+\newcommand{\Experience}[5]{
+	\vspace{5pt}
+	\noindent\textbf{#2} \hfill {\small #4} \\
+	\noindent #1 \\
+	\noindent {\footnotesize #3}
+
+	\begin{itemize}[leftmargin=*,noitemsep,nosep,topsep=0pt,parsep=0pt]
+		{\small #5}
+	\end{itemize}
+}
+
+% Project{name}{link}{description}
+\newcommand{\Project}[3]{
+	\vspace{3pt}
+	\noindent\textbf{\href{#2}{#1}} \hfill{\small\href{#2}{#2}} \\
+	\noindent #3
+}
