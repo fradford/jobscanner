@@ -3,7 +3,12 @@ import { hideBin } from "yargs/helpers";
 import { loadConfig } from "./parse-config";
 import { runScan } from "./scan";
 import { formatScanResult } from "./util/format";
-import { recordFailures, recordMatches } from "./util/logging";
+import {
+  loadPostingIds,
+  recordFailures,
+  recordMatches,
+  recordPostings,
+} from "./util/logging";
 import { AllSourcesFailedError } from "./types";
 
 yargs(hideBin(process.argv))
@@ -28,8 +33,10 @@ yargs(hideBin(process.argv))
       const config = await loadConfig(argv.config);
 
       try {
-        const result = await runScan(config);
+        const seenPostings = await loadPostingIds(argv.logpath);
+        const result = await runScan(config, { seenPostings });
         recordMatches(result.matches, argv.logpath);
+        recordPostings(result.scoredPostings, argv.logpath);
         recordFailures(result.failures, argv.logpath);
 
         console.log(formatScanResult(result));

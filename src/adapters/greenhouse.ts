@@ -1,6 +1,7 @@
 import type { GreenhouseSourceConfig, JobPosting } from "../types";
 import type { SourceAdapter } from "./types";
 import cc, { type CurrencyCodeRecord } from "currency-codes";
+import { sanitizeString } from "../util/format";
 
 interface GreenhouseJobsDTO {
   jobs: Array<{
@@ -37,6 +38,7 @@ export const greenhouseAdapter: SourceAdapter<GreenhouseSourceConfig> = {
         const jobDetails =
           await context.fetchJson<GreenhouseJobDetailsDTO>(url);
         return {
+          id: `${jobDetails.absolute_url}::${sanitizeString(jobDetails.title.toLowerCase())}`,
           sourceId: source.id,
           sourceType: "greenhouse",
           externalId: String(job.id),

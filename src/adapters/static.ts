@@ -1,6 +1,7 @@
 import { load } from "cheerio";
 import type { StaticSourceConfig, JobPosting } from "../types";
 import type { SourceAdapter } from "./types";
+import { sanitizeString } from "../util/format";
 
 export const staticAdapter: SourceAdapter<StaticSourceConfig> = {
   type: "static",
@@ -17,6 +18,7 @@ export const staticAdapter: SourceAdapter<StaticSourceConfig> = {
 
       const url = new URL(linkValue, source.url).toString();
       jobs.push({
+        id: `${url}::${sanitizeString(title.toLowerCase())}`,
         sourceId: source.id,
         sourceType: "static",
         externalId: `${source.id}:${index}:${url}`,

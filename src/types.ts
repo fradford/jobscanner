@@ -66,6 +66,7 @@ export interface SalaryBand {
 // Describes job posting details
 // scanning pipeline produces list of these
 export interface JobPosting {
+  id: string;
   sourceId?: string;
   sourceType: JobSourceConfig["type"];
   externalId: string;
@@ -77,6 +78,7 @@ export interface JobPosting {
   url: string;
   description?: string;
   postedAt?: string;
+  isNew?: boolean;
 }
 
 // Describes relevance of job match
@@ -98,6 +100,7 @@ export interface SourceFailure {
 }
 
 export interface ScanResult {
+  scoredPostings: JobMatch[];
   matches: JobMatch[];
   failures: SourceFailure[];
 }

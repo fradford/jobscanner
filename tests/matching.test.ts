@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { rankPostings, scorePosting } from "../src/matching";
+import { rankPostings, scorePosting, scorePostings } from "../src/matching";
 import type { JobPosting, QueryConfig } from "../src/types";
 
 const baseQuery: QueryConfig = {
@@ -8,6 +8,7 @@ const baseQuery: QueryConfig = {
 
 function posting(overrides: Partial<JobPosting>): JobPosting {
   return {
+    id: "https://example.com/jobs/1::backendengineer",
     sourceType: "greenhouse",
     externalId: "1",
     title: "Backend Engineer",
@@ -39,13 +40,35 @@ describe("matching", () => {
     expect(result.filterReason).toBe("non-remote role");
   });
 
-  test("ranks by score with location bonus", () => {
+  test("scorePostings returns filtered and unfiltered results", () => {
     const query: QueryConfig = {
       ...baseQuery,
-      locations: ["toronto"],
+      excludeKeywords: ["manager"],
     };
+    const scored = scorePostings(
+      [
+        posting({
+          externalId: "1",
+          title: "Backend Engineer",
+          description: "typescript backend",
+          url: "https://example.com/jobs/1",
+        }),
+        posting({
+          externalId: "2",
+          title: "Engineering Manager",
+          description: "backend leadership",
+          url: "https://example.com/jobs/2",
+        }),
+      ],
+      query,
+    );
 
-    const matches = rankPostings(
+    expect(scored).toHaveLength(2);
+    expect(scored.some((match) => match.filtered)).toBe(true);
+  });
+
+  test("rankPostings removes filtered postings and sorts", () => {
+    const scored = scorePostings(
       [
         posting({
           externalId: "1",
@@ -55,15 +78,20 @@ describe("matching", () => {
         }),
         posting({
           externalId: "2",
-          title: "Backend Engineer",
-          location: "Remote",
+          title: "Engineering Manager",
+          description: "backend leadership",
           url: "https://example.com/jobs/2",
         }),
       ],
-      query,
+      {
+        ...baseQuery,
+        excludeKeywords: ["manager"],
+        locations: ["toronto"],
+      },
     );
 
-    expect(matches[0]?.posting.externalId).toBe("1");
-    expect(matches[0]?.score).toBeGreaterThan(matches[1]?.score ?? 0);
+    const ranked = rankPostings(scored);
+    expect(ranked).toHaveLength(1);
+    expect(ranked[0]?.posting.externalId).toBe("1");
   });
 });

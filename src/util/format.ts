@@ -6,12 +6,14 @@ function lineForMatch(match: JobMatch, index: number): string {
     match.matchedKeywords.length > 0
       ? match.matchedKeywords.join(", ")
       : "none";
-  return `${index + 1}. [Score: ${match.score}] ${posting.title} @ ${posting.company}\n   ${posting.location ?? "Unknown location"} | ${posting.url}\n   matched: ${keywords}`;
+  const freshnessMarker = posting.isNew ? " [NEW]" : "";
+  return `${index + 1}. [Score: ${match.score}]${freshnessMarker} ${posting.title} @ ${posting.company}\n   ${posting.location ?? "Unknown location"} | ${posting.url}\n   matched: ${keywords}`;
 }
 
 export function formatScanResult(scan: ScanResult): string {
   const lines: string[] = [];
-  lines.push(`Found ${scan.matches.length} matching jobs.`);
+  const newCount = scan.matches.filter((match) => match.posting.isNew).length;
+  lines.push(`Found ${scan.matches.length} matching jobs (${newCount} new).`);
   if (scan.failures.length > 0) {
     lines.push(`Source failures (${scan.failures.length}):`);
     for (const failure of scan.failures) {
@@ -25,4 +27,9 @@ export function formatScanResult(scan: ScanResult): string {
     );
   }
   return lines.join("\n");
+}
+
+export function sanitizeString(str: string) {
+  str = str.replace(/[^a-z0-9 \.,_-]/gim, "");
+  return str.trim();
 }

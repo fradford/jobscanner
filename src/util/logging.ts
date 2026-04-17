@@ -2,6 +2,24 @@ import type { JobMatch, SourceFailure } from "../types";
 import { file } from "bun";
 import path from "node:path";
 
+function parseLoggedMatches(parsed: unknown, filename: string): JobMatch[] {
+  if (!Array.isArray(parsed)) {
+    throw new Error(`Parsed ${filename} file is invalid!`);
+  }
+
+  const matches = parsed as JobMatch[];
+  for (const match of matches) {
+    if (
+      typeof match?.posting?.url !== "string" ||
+      typeof match?.posting?.title !== "string"
+    ) {
+      throw new Error(`Parsed ${filename} file is invalid!`);
+    }
+  }
+
+  return matches;
+}
+
 /*
   Adds non-duplicate matches to the end of the old list.
   Something like O(m*n), not ideal but should be fine
@@ -9,11 +27,11 @@ import path from "node:path";
 function mergeMatches(oldMatches: JobMatch[], newMatches: JobMatch[]) {
   const merged = Array.from(oldMatches);
   for (const match of newMatches) {
-    const newKey = `${match.posting.url}::${match.posting.title.toLowerCase()}`;
+    const newKey = match.posting.id;
     let duplicate = false;
 
     for (const old of oldMatches) {
-      const oldKey = `${old.posting.url}::${old.posting.title.toLowerCase()}`;
+      const oldKey = old.posting.id;
 
       if (newKey === oldKey) {
         duplicate = true;
@@ -36,19 +54,49 @@ export async function recordMatches(matches: JobMatch[], logPath: string) {
   const fileExists = await matchFile.exists();
   if (!fileExists) {
     // no existing matches so just write the new ones
-    matchFile.write(JSON.stringify(matches, null, 2));
+    await matchFile.write(JSON.stringify(matches, null, 2));
     return;
   }
 
-  const parsed = await matchFile.json();
-
-  if (!Array.isArray(parsed) || parsed.length === 0)
-    throw new Error("Parsed match file is invalid! This shouldn't happen :(");
-
-  const existingMatches = parsed as JobMatch[];
+  const existingMatches = parseLoggedMatches(await matchFile.json(), "match");
   const merged = mergeMatches(existingMatches, matches);
 
   await matchFile.write(JSON.stringify(merged, null, 2));
+}
+
+export async function recordPostings(postings: JobMatch[], logPath: string) {
+  const postingsFile = file(path.join(logPath, "postings.json"));
+
+  const fileExists = await postingsFile.exists();
+  if (!fileExists) {
+    await postingsFile.write(JSON.stringify(postings, null, 2));
+    return;
+  }
+
+  const existingPostings = parseLoggedMatches(
+    await postingsFile.json(),
+    "postings",
+  );
+  const merged = mergeMatches(existingPostings, postings);
+
+  await postingsFile.write(JSON.stringify(merged, null, 2));
+}
+
+export async function loadPostingIds(logPath: string): Promise<Set<string>> {
+  const postingsFile = file(path.join(logPath, "postings.json"));
+  const fileExists = await postingsFile.exists();
+  if (!fileExists) return new Set<string>();
+
+  const seenPostingIds = new Set<string>();
+  const existingPostings = parseLoggedMatches(
+    await postingsFile.json(),
+    "postings",
+  );
+  for (const match of existingPostings) {
+    seenPostingIds.add(match.posting.id);
+  }
+
+  return seenPostingIds;
 }
 
 export async function recordFailures(
@@ -60,7 +108,7 @@ export async function recordFailures(
 
   const fileExists = await failureFile.exists();
   if (!fileExists) {
-    failureFile.write(JSON.stringify(failures, null, 2));
+    await failureFile.write(JSON.stringify(failures, null, 2));
     return;
   }
 
@@ -68,5 +116,5 @@ export async function recordFailures(
   const parsed = (await failureFile.json()) as SourceFailure[];
   const combined = parsed.concat(failures);
 
-  failureFile.write(JSON.stringify(combined, null, 2));
+  await failureFile.write(JSON.stringify(combined, null, 2));
 }

@@ -46,9 +46,33 @@ describe("runScan", () => {
 
     const result = await runScan(baseConfig);
 
+    expect(result.scoredPostings).toHaveLength(2);
+    expect(result.scoredPostings.every((posting) => !posting.filtered)).toBe(
+      true,
+    );
     expect(result.matches).toHaveLength(1);
     expect(result.matches[0]?.posting.url).toBe("https://example.com/jobs/1");
     expect(result.failures).toHaveLength(0);
+  });
+
+  test("marks postings as new based on seen posting keys", async () => {
+    globalThis.fetch = mock(async () => {
+      const html =
+        '<div class="job"><span class="title">Backend Engineer</span><a href="/jobs/1">job</a><span class="desc">backend</span></div>' +
+        '<div class="job"><span class="title">Backend Developer</span><a href="/jobs/2">job</a><span class="desc">backend</span></div>';
+      return new Response(html, { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const seenPostings = new Set<string>([
+      "https://example.com/jobs/1::backend engineer",
+    ]);
+    const result = await runScan(baseConfig, { seenPostings });
+
+    const byUrl = new Map(
+      result.scoredPostings.map((match) => [match.posting.url, match]),
+    );
+    expect(byUrl.get("https://example.com/jobs/1")?.posting.isNew).toBe(false);
+    expect(byUrl.get("https://example.com/jobs/2")?.posting.isNew).toBe(true);
   });
 
   test("throws when all sources fail", async () => {

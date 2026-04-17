@@ -57,7 +57,9 @@ function parseQuery(value: unknown): QueryConfig {
   const locations = asStringArray(value.locations);
   const remoteOnly = asOptionalBoolean(value.remoteOnly);
   const minSalary = asOptionalNumber(value.minSalary);
-  const preferredCurrency = cc.code(asString(value.preferredCurrency));
+  const preferredCurrency = cc.code(
+    asOptionalString(value.preferredCurrency) ?? "",
+  );
 
   return {
     includeKeywords,

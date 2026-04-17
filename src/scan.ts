@@ -1,5 +1,5 @@
 import { dispatchAdapter } from "./adapters";
-import { rankPostings } from "./matching";
+import { scorePostings, rankPostings } from "./matching";
 import {
   type ScanResult,
   type JobScannerConfig,
@@ -9,13 +9,16 @@ import {
 } from "./types";
 import { createFetchContext } from "./util/context";
 
+export interface RunScanOptions {
+  seenPostings?: Set<string>;
+}
+
 function dedupePostings(postings: JobPosting[]): JobPosting[] {
   const seen = new Set<string>();
   const unique: JobPosting[] = [];
   for (const posting of postings) {
-    const key = `${posting.url}::${posting.title.toLowerCase()}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
+    if (seen.has(posting.id)) continue;
+    seen.add(posting.id);
     unique.push(posting);
   }
   return unique;
@@ -33,7 +36,10 @@ function limitMatches(matches: JobMatch[], maxResults?: number): JobMatch[] {
   - matches: ranked job matches
   - failures: collected source fetching failures
 */
-export async function runScan(config: JobScannerConfig): Promise<ScanResult> {
+export async function runScan(
+  config: JobScannerConfig,
+  options: RunScanOptions = {},
+): Promise<ScanResult> {
   const sources = config.sources.filter((source) => source.enabled);
   if (sources.length === 0) throw new Error("No sources enabled!");
 
@@ -69,10 +75,16 @@ export async function runScan(config: JobScannerConfig): Promise<ScanResult> {
     );
   }
 
-  const ranked = rankPostings(dedupePostings(allPostings), config.query);
+  const dedupedPostings = dedupePostings(allPostings).map((posting) => ({
+    ...posting,
+    isNew: !options.seenPostings?.has(posting.id),
+  }));
+  const scoredPostings = scorePostings(dedupedPostings, config.query);
+  const ranked = rankPostings(scoredPostings);
   const matches = limitMatches(ranked, config.output?.maxResults);
 
   return {
+    scoredPostings,
     matches,
     failures,
   };

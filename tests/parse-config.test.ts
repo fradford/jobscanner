@@ -4,19 +4,21 @@ import { parseConfig } from "../src/parse-config";
 describe("parseConfig", () => {
   test("parses valid config and assigns source IDs", () => {
     const config = parseConfig(`
-query:
-  includeKeywords: [typescript, backend]
-sources:
-  - type: greenhouse
-    boardToken: acme
-    enabled: true
-  - type: static
-    url: https://example.com/jobs
-    listingSelector: .job
-    titleSelector: .title
-    linkSelector: a
-    enabled: true
-`);
+      query:
+        includeKeywords: [typescript, backend]
+      sources:
+        - company: acme
+          type: greenhouse
+          boardToken: acme
+          enabled: true
+        - company: example.com
+          type: static
+          url: https://example.com/jobs
+          listingSelector: .job
+          titleSelector: .title
+          linkSelector: a
+          enabled: true
+    `);
 
     expect(config.query.includeKeywords).toEqual(["typescript", "backend"]);
     expect(config.sources).toHaveLength(2);
@@ -27,25 +29,26 @@ sources:
   test("throws for unsupported source types", () => {
     expect(() =>
       parseConfig(`
-query:
-  includeKeywords: [typescript]
-sources:
-  - type: workday
-    enabled: true
-`),
+      query:
+        includeKeywords: [typescript]
+      sources:
+        - type: workday
+          enabled: true
+      `),
     ).toThrow("unsupported source type");
   });
 
   test("throws when includeKeywords is missing", () => {
     expect(() =>
       parseConfig(`
-query:
-  remoteOnly: true
-sources:
-  - type: greenhouse
-    boardToken: acme
-    enabled: true
-`),
+      query:
+        remoteOnly: true
+      sources:
+        - company: acme
+          type: greenhouse
+          boardToken: acme
+          enabled: true
+      `),
     ).toThrow("query.includeKeywords");
   });
 });

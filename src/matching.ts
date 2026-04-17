@@ -214,12 +214,15 @@ export function scorePosting(
   };
 }
 
-export function rankPostings(
+export function scorePostings(
   postings: JobPosting[],
   query: QueryConfig,
 ): JobMatch[] {
-  return postings
-    .map((posting) => scorePosting(posting, query))
+  return postings.map((posting) => scorePosting(posting, query));
+}
+
+export function rankPostings(scoredPostings: JobMatch[]): JobMatch[] {
+  return scoredPostings
     .filter((match) => !match.filtered)
     .sort((a, b) => b.score - a.score);
 }
