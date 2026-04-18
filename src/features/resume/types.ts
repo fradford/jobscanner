@@ -45,3 +45,9 @@ export interface ResumeData {
   coreCompetencies?: string[];
   projects?: ProjectRecord[];
 }
+
+export interface ResumeBuilderOptions {
+  outputPath: string;
+  sections: ResumeSection[];
+  templatePath?: string;
+}

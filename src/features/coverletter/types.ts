@@ -25,3 +25,9 @@ export interface CoverLetterData {
   recipientInfo?: LetterRecipientData;
   bodyParagraphs?: string[];
 }
+
+export interface CoverLetterBuilderOptions {
+  outputPath: string;
+  templatePath?: string;
+  signaturePath?: string;
+}

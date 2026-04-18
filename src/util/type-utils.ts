@@ -72,3 +72,18 @@ export function asNumberArray(value: unknown): number[] {
   }
   return value.map((item) => asNumber(item));
 }
+
+export function asOptionalStringArray(value: unknown): string[] | undefined {
+  if (value === undefined) return undefined;
+  return asStringArray(value);
+}
+
+export function asOptionalBooleanArray(value: unknown): boolean[] | undefined {
+  if (value === undefined) return undefined;
+  return asBooleanArray(value);
+}
+
+export function asOptionalNumberArray(value: unknown): number[] | undefined {
+  if (value === undefined) return undefined;
+  return asNumberArray(value);
+}

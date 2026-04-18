@@ -12,6 +12,10 @@ import {
 import { AllSourcesFailedError } from "./features/scan/types";
 import { buildResume, loadResume } from "./features/resume/build-resume";
 import { type ResumeSection } from "./features/resume/types";
+import {
+  buildCoverLetter,
+  loadCoverLetter,
+} from "./features/coverletter/build-cover-letter";
 
 yargs(hideBin(process.argv))
   .scriptName("jobscanner")
@@ -75,13 +79,13 @@ yargs(hideBin(process.argv))
     },
   )
   .command(
-    "create <output>",
-    "Creates a customised resume for a matched job",
+    "resume <output>",
+    "Creates a resume",
     (command) =>
       command
         .positional("output", {
           type: "string",
-          describe: "Output file path, e.g. 'output/example.pdf'",
+          describe: "Output file path, e.g. 'output/resume.pdf'",
         })
         .option("template", {
           type: "string",
@@ -89,9 +93,9 @@ yargs(hideBin(process.argv))
           describe:
             "Path to resume tex template, must define macros as in default file",
         })
-        .option("resume", {
+        .option("data", {
           type: "string",
-          default: "config/resume-data.yaml",
+          default: "config/default-resume.yaml",
           describe: "Path to structured resume content file (yaml|yml)",
         })
         .option("sections", {
@@ -107,14 +111,49 @@ yargs(hideBin(process.argv))
           describe: "Customise the included sections (and their order).",
         }),
     async (argv) => {
-      if (typeof argv.output === "undefined")
+      if (argv.output === undefined)
         throw new Error("Missing positional arument 'output'");
 
-      const resumeData = await loadResume(argv.resume);
+      const resumeData = await loadResume(argv.data);
       await buildResume(resumeData, {
         outputPath: argv.output,
         sections: argv.sections as ResumeSection[],
         templatePath: argv.template,
+      });
+    },
+  )
+  .command(
+    "letter <output>",
+    "Creates a cover letter",
+    (command) =>
+      command
+        .positional("output", {
+          type: "string",
+          describe: "Output file path, e.g 'output/letter.pdf'",
+        })
+        .option("data", {
+          type: "string",
+          default: "config/default-letter.yaml",
+          describe: "Path to structured cover letter content file (yaml|yml)",
+        })
+        .option("template", {
+          type: "string",
+          default: "templates/cover-letter.tex",
+          describe: "Path to cover letter tex template",
+        })
+        .option("signature", {
+          type: "string",
+          describe: "Path to signature image file",
+        }),
+    async (argv) => {
+      if (argv.output === undefined)
+        throw new Error("Missing positional argument 'output'");
+
+      const letterData = await loadCoverLetter(argv.data);
+      await buildCoverLetter(letterData, {
+        outputPath: argv.output,
+        templatePath: argv.template,
+        signaturePath: argv.signature,
       });
     },
   )

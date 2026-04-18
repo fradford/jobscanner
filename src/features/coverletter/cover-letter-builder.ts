@@ -1,9 +1,17 @@
-import type { CoverLetterData, StreetAddress } from "./types";
+import type {
+  CoverLetterData,
+  LetterRecipientData,
+  LetterSenderData,
+  StreetAddress,
+} from "./types";
 import { file } from "bun";
 import { escapeLatex } from "../../util/formatters";
 import latex from "node-latex";
 import { createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
+import { send } from "node:process";
+import { format } from "node:path/win32";
+import { isExportSpecifier } from "typescript";
 
 export class CoverLetterBuilder {
   private data: CoverLetterData;
@@ -24,32 +32,12 @@ export class CoverLetterBuilder {
     this.signaturepath = signature;
   }
 
-  public addSenderDetails(
-    name: string,
-    company?: string,
-    email?: string,
-    phone?: string,
-    address?: StreetAddress,
-  ) {
-    this.data.senderInfo = {
-      name,
-      company,
-      email,
-      phone,
-      address,
-    };
+  public addSenderDetails(details: LetterSenderData) {
+    this.data.senderInfo = details;
   }
 
-  public addRecipientDetails(
-    name: string,
-    company?: string,
-    address?: StreetAddress,
-  ) {
-    this.data.recipientInfo = {
-      name,
-      company,
-      address,
-    };
+  public addRecipientDetails(details: LetterRecipientData) {
+    this.data.recipientInfo = details;
   }
 
   public addBodyParagraphs(bodyParagraphs: string[]) {
@@ -76,16 +64,21 @@ export class CoverLetterBuilder {
 
     buffer += "\\address{";
 
-    const senderInfo = this.data.senderInfo;
-    buffer += Object.keys(senderInfo)
-      .map((key) => {
-        const val = Reflect.get(senderInfo, key);
-        if (val !== undefined) {
-          return escapeLatex(val);
-        }
-      })
-      .join("\\\\")
-      .trim();
+    const info = this.data.senderInfo;
+
+    const addressParts = [];
+
+    if (info.name) addressParts.push(escapeLatex(info.name));
+    if (info.company) addressParts.push(escapeLatex(info.company));
+    if (info.email) addressParts.push(escapeLatex(info.email));
+    if (info.phone) addressParts.push(escapeLatex(info.phone));
+    if (info.address) {
+      this.buildStreetAddress(info.address).forEach((line) =>
+        addressParts.push(escapeLatex(line)),
+      );
+    }
+
+    buffer += addressParts.join("\\\\").trim();
     buffer += "}\n\n";
     return buffer;
   }
@@ -99,19 +92,41 @@ export class CoverLetterBuilder {
     buffer += "\\begin{document}\n";
     buffer += "\\begin{letter}{";
 
-    const recipientInfo = this.data.recipientInfo;
-    buffer += Object.keys(recipientInfo)
-      .map((key) => {
-        const val = Reflect.get(recipientInfo, key);
-        if (val !== undefined) {
-          return escapeLatex(val);
-        }
-      })
-      .join("\\\\")
-      .trim();
+    const info = this.data.recipientInfo;
+    const addressParts = [];
+
+    if (info.name) addressParts.push(escapeLatex(info.name));
+    if (info.company) addressParts.push(escapeLatex(info.company));
+    if (info.address) {
+      this.buildStreetAddress(info.address).forEach((line) =>
+        addressParts.push(escapeLatex(line)),
+      );
+    }
+
+    buffer += addressParts.join("\\\\").trim();
     buffer += "}\n\n";
     buffer += `\\opening{Dear ${this.data.recipientInfo.name},}\n\n`;
     return buffer;
+  }
+
+  private buildStreetAddress(address: StreetAddress): string[] {
+    // returns one or two lines in an array e.g.
+    // 123 Example Street
+    // Toronto, ON, Canada, A1A 1A1
+
+    const formatted = [];
+
+    if (address.addressLine1) formatted.push(address.addressLine1);
+
+    const addressLine2 = [];
+    if (address.city) addressLine2.push(address.city);
+    if (address.province) addressLine2.push(address.province);
+    if (address.country) addressLine2.push(address.country);
+    if (address.postalCode) addressLine2.push(address.postalCode);
+
+    formatted.push(addressLine2.join(", "));
+
+    return formatted;
   }
 
   private buildLetterBody(buffer: string) {

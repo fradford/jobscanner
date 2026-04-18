@@ -3,6 +3,7 @@ import { ResumeBuilder } from "./resume-builder";
 import {
   asNumber,
   asOptionalString,
+  asOptionalStringArray,
   asString,
   asStringArray,
   isRecord,
@@ -12,7 +13,7 @@ import type {
   ExperienceRecord,
   ProjectRecord,
   ResumeData,
-  ResumeSection,
+  ResumeBuilderOptions,
   Contact,
 } from "./types";
 
@@ -29,28 +30,18 @@ export function parseResumeContent(content: string): ResumeData {
   if (!isRecord(parsed))
     throw new Error("Invalid resume: root value must be an object.");
 
-  const education = parsed.education;
-  const experience = parsed.experience;
-  const projects = parsed.projects;
-
   return {
     name: asOptionalString(parsed.name),
     title: asOptionalString(parsed.title),
     address: asOptionalString(parsed.address),
     summary: asOptionalString(parsed.summary),
     contacts: parseContacts(parsed.contacts),
-    education: parseEducation(education),
-    experience: parseExperience(experience),
-    skills: parseStringArray(parsed.skills),
-    coreCompetencies: parseStringArray(parsed.coreCompetencies),
-    projects: parseProjects(projects),
+    education: parseEducation(parsed.education),
+    experience: parseExperience(parsed.experience),
+    skills: asOptionalStringArray(parsed.skills),
+    coreCompetencies: asOptionalStringArray(parsed.coreCompetencies),
+    projects: parseProjects(parsed.projects),
   };
-}
-
-export interface ResumeBuilderOptions {
-  outputPath: string;
-  sections: ResumeSection[];
-  templatePath?: string;
 }
 
 // creates a ResumeBuilder and builds the resume using provided data
@@ -64,13 +55,10 @@ export async function buildResume(
     options.templatePath,
   );
 
-  if (typeof resumeData.name !== "undefined") builder.addName(resumeData.name);
-  if (typeof resumeData.title !== "undefined")
-    builder.addTitle(resumeData.title);
-  if (typeof resumeData.address !== "undefined")
-    builder.addAddress(resumeData.address);
-  if (typeof resumeData.summary !== "undefined")
-    builder.addSummary(resumeData.summary);
+  if (resumeData.name) builder.addName(resumeData.name);
+  if (resumeData.title) builder.addTitle(resumeData.title);
+  if (resumeData.address) builder.addAddress(resumeData.address);
+  if (resumeData.summary) builder.addSummary(resumeData.summary);
 
   if (Array.isArray(resumeData.contacts)) {
     builder.addContacts(
@@ -103,11 +91,6 @@ export async function buildResume(
   }
 
   await builder.buildResume();
-}
-
-function parseStringArray(value: unknown): string[] | undefined {
-  if (value === undefined) return undefined;
-  return asStringArray(value);
 }
 
 function parseContacts(value: unknown): Contact[] | undefined {
