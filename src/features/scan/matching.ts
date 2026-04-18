@@ -7,17 +7,6 @@ import type {
 } from "./types";
 import cc, { type CurrencyCodeRecord } from "currency-codes";
 
-function mapCountryCode(location: string): CurrencyCodeRecord | undefined {
-  const lower = location.toLowerCase();
-
-  for (const country of cc.countries()) {
-    if (lower.includes(country)) {
-      // probably safe to assume the first currency is the most relevant
-      return cc.country(country)[0] as CurrencyCodeRecord;
-    }
-  }
-}
-
 /*
   If the adapter didn't include workMode, we can try to detect it from the job description
 */
