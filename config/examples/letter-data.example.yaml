@@ -1,0 +1,18 @@
+senderInfo:
+  name: John Smith
+  email: john@example.com
+  phone: (111) 222-3333
+  address:
+    city: Toronto
+    province: ON
+recipientInfo:
+  name: Hiring Manager
+  company: ACME Inc
+  address:
+    addressLine1: 123 Example Street
+    city: Toronto
+    province: ON
+bodyParagraphs:
+  - I am excited to apply for the software engineer position at ACME Inc.
+  - I have significant experience in the field.
+  - Thank you for consideration.
