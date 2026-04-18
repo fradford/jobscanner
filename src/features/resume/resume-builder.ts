@@ -9,7 +9,8 @@ import type {
   ProjectRecord,
   ResumeData,
   ResumeSection,
-} from "../types";
+} from "./types";
+import { escapeLatex } from "../../util/formatters";
 
 export class ResumeBuilder {
   private data: ResumeData;
@@ -20,13 +21,13 @@ export class ResumeBuilder {
   private sections: ResumeSection[];
 
   public constructor(
-    filepath: string,
+    output: string,
     sections: ResumeSection[],
     template: string = "templates/resume.tex",
   ) {
     this.data = {};
 
-    this.outputpath = filepath;
+    this.outputpath = output;
     this.templatepath = template;
 
     this.sections = sections;
@@ -141,46 +142,17 @@ export class ResumeBuilder {
     await pipeline(pdf, output);
   }
 
-  private escapeLatex(value: string): string {
-    return value.replace(/[\\{}$&#_%~^]/g, (char) => {
-      switch (char) {
-        case "\\":
-          return "\\textbackslash{}";
-        case "{":
-          return "\\{";
-        case "}":
-          return "\\}";
-        case "$":
-          return "\\$";
-        case "&":
-          return "\\&";
-        case "#":
-          return "\\#";
-        case "_":
-          return "\\_";
-        case "%":
-          return "\\%";
-        case "~":
-          return "\\textasciitilde{}";
-        case "^":
-          return "\\textasciicircum{}";
-        default:
-          return char;
-      }
-    });
-  }
-
   // TODO: Should log failures for these functions probably
   private buildHeader(buffer: string): string {
     // can't build this section with no data
     if (typeof this.data.contacts === "undefined") return buffer;
 
     // build Header
-    const headerCommand = `\\Header{${this.escapeLatex(this.data.name ?? "")}}{${this.escapeLatex(this.data.title ?? "")}}{${this.escapeLatex(this.data.address ?? "")}}`;
+    const headerCommand = `\\Header{${escapeLatex(this.data.name ?? "")}}{${escapeLatex(this.data.title ?? "")}}{${escapeLatex(this.data.address ?? "")}}`;
 
     let contactCommand = `\\ContactLine`;
     for (const contact of this.data.contacts) {
-      contactCommand += `{\\href{${contact.link ?? ""}}{${this.escapeLatex(contact.display)}}}`;
+      contactCommand += `{\\href{${contact.link ?? ""}}{${escapeLatex(contact.display)}}}`;
     }
 
     buffer += headerCommand + "\n";
@@ -191,7 +163,7 @@ export class ResumeBuilder {
   private buildSummary(buffer: string): string {
     // build professional summary
     buffer += "\n\\section*{Summary}\n";
-    buffer += this.escapeLatex(this.data.summary ?? "") + "\n";
+    buffer += escapeLatex(this.data.summary ?? "") + "\n";
     return buffer;
   }
 
@@ -206,9 +178,9 @@ export class ResumeBuilder {
       "\\begin{tabularx}{\\textwidth}{>{\\centering\\arraybackslash}X >{\\centering\\arraybackslash}X >{\\centering\\arraybackslash}X}";
 
     for (let i = 0; i < this.data.coreCompetencies.length; i += 3) {
-      const c1 = this.escapeLatex(this.data.coreCompetencies[i] ?? "");
-      const c2 = this.escapeLatex(this.data.coreCompetencies[i + 1] ?? "");
-      const c3 = this.escapeLatex(this.data.coreCompetencies[i + 2] ?? "");
+      const c1 = escapeLatex(this.data.coreCompetencies[i] ?? "");
+      const c2 = escapeLatex(this.data.coreCompetencies[i + 1] ?? "");
+      const c3 = escapeLatex(this.data.coreCompetencies[i + 2] ?? "");
       buffer += `${c1} & ${c2} & ${c3} \\\\\n`;
     }
 
@@ -224,7 +196,7 @@ export class ResumeBuilder {
     buffer += "\n\\section*{Education}\n";
 
     for (const education of this.data.education) {
-      buffer += `\\Education{${this.escapeLatex(education.degree)}}{${this.escapeLatex(education.school)}}{${education.graduationYear}}\n\n`;
+      buffer += `\\Education{${escapeLatex(education.degree)}}{${escapeLatex(education.school)}}{${education.graduationYear}}\n\n`;
     }
     return buffer;
   }
@@ -236,7 +208,7 @@ export class ResumeBuilder {
 
     const getItemizedBullets = (job: ExperienceRecord): string => {
       return job.bullets
-        .map((bullet) => `\\item ${this.escapeLatex(bullet)}`)
+        .map((bullet) => `\\item ${escapeLatex(bullet)}`)
         .join("\n")
         .trim();
     };
@@ -248,7 +220,7 @@ export class ResumeBuilder {
     buffer += "\n\\section*{Work Experience}\n";
 
     for (const job of this.data.experience) {
-      buffer += `\\Experience{${this.escapeLatex(job.position)}}{${this.escapeLatex(job.company)}}{${this.escapeLatex(job.companyBlurb ?? "")}}{${this.escapeLatex(getDateRange(job))}}{${getItemizedBullets(job)}}\n\n`;
+      buffer += `\\Experience{${escapeLatex(job.position)}}{${escapeLatex(job.company)}}{${escapeLatex(job.companyBlurb ?? "")}}{${escapeLatex(getDateRange(job))}}{${getItemizedBullets(job)}}\n\n`;
     }
     return buffer;
   }
@@ -261,7 +233,7 @@ export class ResumeBuilder {
     buffer += "\n\\section*{Projects}\n";
 
     for (const project of this.data.projects) {
-      buffer += `\\Project{${this.escapeLatex(project.name)}}{${this.escapeLatex(project.link ?? "")}}{${this.escapeLatex(project.description)}}\n\n`;
+      buffer += `\\Project{${escapeLatex(project.name)}}{${escapeLatex(project.link ?? "")}}{${escapeLatex(project.description)}}\n\n`;
     }
     return buffer;
   }
@@ -273,7 +245,7 @@ export class ResumeBuilder {
     // build skills section
     buffer += "\n\\section*{Skills}\n";
 
-    buffer += this.escapeLatex(this.data.skills.join(", ").trim());
+    buffer += escapeLatex(this.data.skills.join(", ").trim());
     buffer += "\n";
     return buffer;
   }

@@ -1,4 +1,4 @@
-import type { RequestConfig } from "../types";
+import type { RequestConfig } from "../features/scan/types";
 import type { FetchContext } from "./types";
 
 const DEFAULT_REQUEST: Required<RequestConfig> = {

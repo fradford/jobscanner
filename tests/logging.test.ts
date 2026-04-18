@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { recordPostings, loadPostingIds } from "../src/util/logging";
-import type { JobMatch } from "../src/types";
+import type { JobMatch } from "../src/features/scan/types";
 
 const tempDirs: string[] = [];
 

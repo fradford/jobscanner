@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { rankPostings, scorePosting, scorePostings } from "../src/matching";
-import type { JobPosting, QueryConfig } from "../src/types";
+import {
+  rankPostings,
+  scorePosting,
+  scorePostings,
+} from "../src/features/scan/matching";
+import type { JobPosting, QueryConfig } from "../src/features/scan/types";
 
 const baseQuery: QueryConfig = {
   includeKeywords: ["backend", "typescript"],

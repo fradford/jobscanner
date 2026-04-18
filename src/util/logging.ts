@@ -1,4 +1,4 @@
-import type { JobMatch, SourceFailure } from "../types";
+import type { JobMatch, SourceFailure } from "../features/scan/types";
 import { file } from "bun";
 import path from "node:path";
 

@@ -15,8 +15,8 @@ import {
   asString,
   asStringArray,
   isRecord,
-} from "./util/type-utils";
-import cc, { type CurrencyCodeRecord } from "currency-codes";
+} from "../../util/type-utils";
+import cc from "currency-codes";
 
 const SOURCE_TYPES = new Set(["greenhouse", "static"]);
 

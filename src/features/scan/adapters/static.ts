@@ -1,7 +1,7 @@
 import { load } from "cheerio";
 import type { StaticSourceConfig, JobPosting } from "../types";
 import type { SourceAdapter } from "./types";
-import { sanitizeString } from "../util/format";
+import { sanitizeString } from "../../../util/formatters";
 
 export const staticAdapter: SourceAdapter<StaticSourceConfig> = {
   type: "static",

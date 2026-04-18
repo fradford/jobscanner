@@ -1,5 +1,5 @@
 import { file } from "bun";
-import { ResumeBuilder } from "./builders/resume-builder";
+import { ResumeBuilder } from "./resume-builder";
 import yaml from "yaml";
 import {
   asNumber,
@@ -7,7 +7,7 @@ import {
   asString,
   asStringArray,
   isRecord,
-} from "./util/type-utils";
+} from "../../util/type-utils";
 import type {
   EducationRecord,
   ExperienceRecord,

@@ -1,4 +1,4 @@
-import type { RequestConfig } from "../types";
+import type { RequestConfig } from "../features/scan/types";
 
 export interface FetchContext {
   request: Required<RequestConfig>;

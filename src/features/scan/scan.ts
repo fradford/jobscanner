@@ -7,7 +7,7 @@ import {
   type JobMatch,
   AllSourcesFailedError,
 } from "./types";
-import { createFetchContext } from "./util/context";
+import { createFetchContext } from "../../util/context";
 
 export interface RunScanOptions {
   seenPostings?: Set<string>;

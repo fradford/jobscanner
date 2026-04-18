@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, mock, test } from "bun:test";
-import { ResumeBuilder } from "../src/builders/resume-builder";
-import { buildResume, parseResumeContent } from "../src/build-resume";
-import type { ResumeData } from "../src/types";
+import { ResumeBuilder } from "../src/features/resume/resume-builder";
+import {
+  buildResume,
+  parseResumeContent,
+} from "../src/features/resume/build-resume";
+import type { ResumeData } from "../src/features/resume/types";
 
 afterEach(() => {
   mock.restore();
@@ -67,13 +70,10 @@ describe("buildResume", () => {
       ],
     };
 
-    await buildResume(
-      resumeData,
-      {
-        outputPath: "output/resume.pdf",
-        sections: ["summary"],
-      },
-    );
+    await buildResume(resumeData, {
+      outputPath: "output/resume.pdf",
+      sections: ["summary"],
+    });
 
     expect(addContacts).toHaveBeenCalledTimes(1);
     expect(addContacts).toHaveBeenCalledWith(

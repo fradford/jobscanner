@@ -1,5 +1,5 @@
 import type { JobPosting, JobSourceConfig } from "../types";
-import type { FetchContext } from "../util/types";
+import type { FetchContext } from "../../../util/types";
 
 export interface SourceAdapter<T extends JobSourceConfig> {
   type: T["type"];

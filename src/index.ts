@@ -1,16 +1,17 @@
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import { loadConfig } from "./parse-config";
-import { runScan } from "./scan";
-import { formatScanResult } from "./util/format";
+import { loadConfig } from "./features/scan/parse-config";
+import { runScan } from "./features/scan/scan";
+import { formatScanResult } from "./util/formatters";
 import {
   loadPostingIds,
   recordFailures,
   recordMatches,
   recordPostings,
 } from "./util/logging";
-import { AllSourcesFailedError, type ResumeSection } from "./types";
-import { buildResume, loadResume } from "./build-resume";
+import { AllSourcesFailedError } from "./features/scan/types";
+import { buildResume, loadResume } from "./features/resume/build-resume";
+import { type ResumeSection } from "./features/resume/types";
 
 yargs(hideBin(process.argv))
   .scriptName("jobscanner")
