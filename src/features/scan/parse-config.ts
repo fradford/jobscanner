@@ -1,5 +1,4 @@
-import { file } from "bun";
-import yaml from "yaml";
+import { file, YAML } from "bun";
 import type {
   JobScannerConfig,
   JobSourceConfig,
@@ -28,7 +27,7 @@ export async function loadConfig(
 }
 
 export function parseConfig(configString: string): JobScannerConfig {
-  const parsed = yaml.parse(configString);
+  const parsed = YAML.parse(configString);
 
   if (!isRecord(parsed))
     throw new Error("Invalid config: root value must be an object.");

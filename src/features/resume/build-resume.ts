@@ -1,6 +1,5 @@
-import { file } from "bun";
+import { file, YAML } from "bun";
 import { ResumeBuilder } from "./resume-builder";
-import yaml from "yaml";
 import {
   asNumber,
   asOptionalString,
@@ -25,7 +24,7 @@ export async function loadResume(resumePath: string): Promise<ResumeData> {
 
 // parses string representation of resume config into a valid ResumeData object
 export function parseResumeContent(content: string): ResumeData {
-  const parsed = yaml.parse(content);
+  const parsed = YAML.parse(content);
 
   if (!isRecord(parsed))
     throw new Error("Invalid resume: root value must be an object.");
