@@ -61,13 +61,9 @@ export async function buildResume(
   if (resumeData.summary) builder.addSummary(resumeData.summary);
 
   if (Array.isArray(resumeData.contacts)) {
-    builder.addContacts(
-      resumeData.contacts[0],
-      resumeData.contacts[1],
-      resumeData.contacts[2],
-      resumeData.contacts[3],
-      resumeData.contacts[4],
-    );
+    const [email, phone, linkedin, github, portfolio] =
+      resumeData.contacts ?? [];
+    builder.addContacts(email, phone, linkedin, github, portfolio);
   }
 
   for (const education of resumeData.education ?? []) {

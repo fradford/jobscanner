@@ -22,29 +22,12 @@ function parseLoggedMatches(parsed: unknown, filename: string): JobMatch[] {
 
 /*
   Adds non-duplicate matches to the end of the old list.
-  Something like O(m*n), not ideal but should be fine
 */
 function mergeMatches(oldMatches: JobMatch[], newMatches: JobMatch[]) {
-  const merged = Array.from(oldMatches);
-  for (const match of newMatches) {
-    const newKey = match.posting.id;
-    let duplicate = false;
-
-    for (const old of oldMatches) {
-      const oldKey = old.posting.id;
-
-      if (newKey === oldKey) {
-        duplicate = true;
-        break;
-      }
-    }
-
-    if (!duplicate) {
-      merged.push(match);
-    }
-  }
-
-  return merged;
+  const seenIds = new Set(oldMatches.map((m) => m.posting.id));
+  return oldMatches.concat(
+    newMatches.filter((m) => !seenIds.has(m.posting.id)),
+  );
 }
 
 export async function recordMatches(matches: JobMatch[], logPath: string) {
