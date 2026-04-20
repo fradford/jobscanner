@@ -3,7 +3,7 @@ import type { CurrencyCodeRecord } from "currency-codes";
 // Basic filters
 export type WorkMode = "remote" | "hybrid" | "onsite" | "unknown";
 
-export interface QueryConfig {
+export interface MatchConfig {
   includeKeywords: string[];
   excludeKeywords?: string[];
   locations?: string[];
@@ -51,7 +51,7 @@ export interface OutputConfig {
 
 // Consolidated search config
 export interface JobScannerConfig {
-  query: QueryConfig;
+  match: MatchConfig;
   sources: JobSourceConfig[];
   request?: RequestConfig;
   output?: OutputConfig;
@@ -100,8 +100,13 @@ export interface SourceFailure {
 }
 
 export interface ScanResult {
-  scoredPostings: JobMatch[];
+  postings: JobPosting[];
+  failures: SourceFailure[];
+}
+
+export interface ScanMatchResult {
   matches: JobMatch[];
+  allPostings: JobMatch[];
   failures: SourceFailure[];
 }
 

@@ -1,4 +1,4 @@
-query:
+match:
   includeKeywords:
     - software engineer
     - software developer

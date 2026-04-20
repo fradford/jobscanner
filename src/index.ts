@@ -1,7 +1,6 @@
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { loadConfig } from "./features/scan/parse-config";
-import { runScan } from "./features/scan/scan";
 import { formatScanResult } from "./util/formatters";
 import {
   loadPostingIds,
@@ -16,6 +15,7 @@ import {
   buildCoverLetter,
   loadCoverLetter,
 } from "./features/coverletter/build-cover-letter";
+import { runScanPipeline } from "./features/scan";
 
 yargs(hideBin(process.argv))
   .scriptName("jobscanner")
@@ -40,9 +40,9 @@ yargs(hideBin(process.argv))
 
       try {
         const seenPostings = await loadPostingIds(argv.logpath);
-        const result = await runScan(config, { seenPostings });
+        const result = await runScanPipeline(config, seenPostings);
         recordMatches(result.matches, argv.logpath);
-        recordPostings(result.scoredPostings, argv.logpath);
+        recordPostings(result.allPostings, argv.logpath);
         recordFailures(result.failures, argv.logpath);
 
         console.log(formatScanResult(result));

@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
+import type { JobPosting, MatchConfig } from "../src/features/scan/types";
 import {
-  rankPostings,
+  scoreAllPostings,
   scorePosting,
-  scorePostings,
-} from "../src/features/scan/matching";
-import type { JobPosting, QueryConfig } from "../src/features/scan/types";
+} from "../src/features/scan/pipeline/score";
+import { rankAllMatches } from "../src/features/scan/pipeline/rank";
 
-const baseQuery: QueryConfig = {
+const baseQuery: MatchConfig = {
   includeKeywords: ["backend", "typescript"],
 };
 
@@ -45,11 +45,11 @@ describe("matching", () => {
   });
 
   test("scorePostings returns filtered and unfiltered results", () => {
-    const query: QueryConfig = {
+    const query: MatchConfig = {
       ...baseQuery,
       excludeKeywords: ["manager"],
     };
-    const scored = scorePostings(
+    const scored = scoreAllPostings(
       [
         posting({
           externalId: "1",
@@ -72,7 +72,7 @@ describe("matching", () => {
   });
 
   test("rankPostings removes filtered postings and sorts", () => {
-    const scored = scorePostings(
+    const scored = scoreAllPostings(
       [
         posting({
           externalId: "1",
@@ -94,7 +94,7 @@ describe("matching", () => {
       },
     );
 
-    const ranked = rankPostings(scored);
+    const ranked = rankAllMatches(scored);
     expect(ranked).toHaveLength(1);
     expect(ranked[0]?.posting.externalId).toBe("1");
   });

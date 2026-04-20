@@ -3,7 +3,7 @@ import type {
   JobScannerConfig,
   JobSourceConfig,
   OutputConfig,
-  QueryConfig,
+  MatchConfig,
   RequestConfig,
 } from "./types";
 import {
@@ -35,16 +35,16 @@ export function parseConfig(configString: string): JobScannerConfig {
     throw new Error("Invalid config: no sources defined");
 
   return {
-    query: parseQuery(parsed.query),
+    match: parseMatchConfig(parsed.match),
     sources: parsed.sources.map((source, index) => parseSource(source, index)),
     request: parseRequest(parsed.request),
     output: parseOutput(parsed.output),
   };
 }
 
-function parseQuery(value: unknown): QueryConfig {
+function parseMatchConfig(value: unknown): MatchConfig {
   if (!isRecord(value))
-    throw new Error("Invalid config: invalid query object.");
+    throw new Error("Invalid config: invalid match object.");
 
   const includeKeywords = asStringArray(value.includeKeywords);
   if (includeKeywords.length === 0)

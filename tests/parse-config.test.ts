@@ -4,7 +4,7 @@ import { parseConfig } from "../src/features/scan/parse-config";
 describe("parseConfig", () => {
   test("parses valid config and assigns source IDs", () => {
     const config = parseConfig(`
-      query:
+      match:
         includeKeywords: [typescript, backend]
       sources:
         - company: acme
@@ -20,7 +20,7 @@ describe("parseConfig", () => {
           enabled: true
     `);
 
-    expect(config.query.includeKeywords).toEqual(["typescript", "backend"]);
+    expect(config.match.includeKeywords).toEqual(["typescript", "backend"]);
     expect(config.sources).toHaveLength(2);
     expect(config.sources[0]?.id).toBe("greenhouse:acme");
     expect(config.sources[1]?.id).toBe("static:https://example.com/jobs");
@@ -29,7 +29,7 @@ describe("parseConfig", () => {
   test("throws for unsupported source types", () => {
     expect(() =>
       parseConfig(`
-      query:
+      match:
         includeKeywords: [typescript]
       sources:
         - type: workday
@@ -41,7 +41,7 @@ describe("parseConfig", () => {
   test("throws when includeKeywords is missing", () => {
     expect(() =>
       parseConfig(`
-      query:
+      match:
         remoteOnly: true
       sources:
         - company: acme

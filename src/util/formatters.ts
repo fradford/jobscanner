@@ -1,4 +1,8 @@
-import type { JobMatch, ScanResult } from "../features/scan/types";
+import type {
+  JobMatch,
+  ScanMatchResult,
+  ScanResult,
+} from "../features/scan/types";
 
 function lineForMatch(match: JobMatch, index: number): string {
   const posting = match.posting;
@@ -10,7 +14,7 @@ function lineForMatch(match: JobMatch, index: number): string {
   return `${index + 1}. [Score: ${match.score}]${freshnessMarker} ${posting.title} @ ${posting.company}\n   ${posting.location ?? "Unknown location"} | ${posting.url}\n   matched: ${keywords}`;
 }
 
-export function formatScanResult(scan: ScanResult): string {
+export function formatScanResult(scan: ScanMatchResult): string {
   const lines: string[] = [];
   const newCount = scan.matches.filter((match) => match.posting.isNew).length;
   lines.push(`Found ${scan.matches.length} matching jobs (${newCount} new).`);

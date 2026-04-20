@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, mock, test } from "bun:test";
-import { runScan } from "../src/features/scan/scan";
 import type { JobScannerConfig } from "../src/features/scan/types";
+import { runScanPipeline } from "../src/features/scan";
 
 const originalFetch = globalThis.fetch;
 
 const baseConfig: JobScannerConfig = {
-  query: {
+  match: {
     includeKeywords: ["backend"],
   },
   request: {
@@ -44,12 +44,10 @@ describe("runScan", () => {
       return new Response(html, { status: 200 });
     }) as unknown as typeof fetch;
 
-    const result = await runScan(baseConfig);
+    const result = await runScanPipeline(baseConfig);
 
-    expect(result.scoredPostings).toHaveLength(2);
-    expect(result.scoredPostings.every((posting) => !posting.filtered)).toBe(
-      true,
-    );
+    expect(result.allPostings).toHaveLength(2);
+    expect(result.allPostings.every((posting) => !posting.filtered)).toBe(true);
     expect(result.matches).toHaveLength(1);
     expect(result.matches[0]?.posting.url).toBe("https://example.com/jobs/1");
     expect(result.failures).toHaveLength(0);
@@ -66,10 +64,10 @@ describe("runScan", () => {
     const seenPostings = new Set<string>([
       "https://example.com/jobs/1::backend engineer",
     ]);
-    const result = await runScan(baseConfig, { seenPostings });
+    const result = await runScanPipeline(baseConfig, seenPostings);
 
     const byUrl = new Map(
-      result.scoredPostings.map((match) => [match.posting.url, match]),
+      result.allPostings.map((match) => [match.posting.url, match]),
     );
     expect(byUrl.get("https://example.com/jobs/1")?.posting.isNew).toBe(false);
     expect(byUrl.get("https://example.com/jobs/2")?.posting.isNew).toBe(true);
@@ -80,6 +78,6 @@ describe("runScan", () => {
       return new Response("oops", { status: 500, statusText: "Server Error" });
     }) as unknown as typeof fetch;
 
-    expect(runScan(baseConfig)).rejects.toThrow("All sources failed");
+    expect(runScanPipeline(baseConfig)).rejects.toThrow("All sources failed");
   });
 });
