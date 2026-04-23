@@ -7,10 +7,13 @@ match:
     - typescript
     - junior
   excludeKeywords:
-    - staff
-    - senior
-    - director
-    - manager
+    - marketing
+    - sales
+  seniority:
+    - level: junior
+      bonus: 40
+    - level: mid
+      bonus: 15
   locations:
     - remote
     - canada

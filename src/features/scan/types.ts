@@ -2,10 +2,27 @@ import type { CurrencyCodeRecord } from "currency-codes";
 
 // Basic filters
 export type WorkMode = "remote" | "hybrid" | "onsite" | "unknown";
+export type Seniority =
+  | "intern"
+  | "junior"
+  | "mid"
+  | "senior"
+  | "staff"
+  | "principal"
+  | "lead"
+  | "manager"
+  | "director"
+  | "executive"
+  | "unknown";
+export interface SeniorityRule {
+  level: Exclude<Seniority, "unknown">;
+  bonus?: number;
+}
 
 export interface MatchConfig {
   includeKeywords: string[];
   excludeKeywords?: string[];
+  seniority?: SeniorityRule[];
   locations?: string[];
   remoteOnly?: boolean;
   minSalary?: number;
@@ -74,6 +91,7 @@ export interface JobPosting {
   company: string;
   location?: string;
   workMode: WorkMode;
+  seniority?: Seniority;
   salaryBands?: SalaryBand[];
   url: string;
   description?: string;

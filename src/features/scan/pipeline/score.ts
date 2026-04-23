@@ -1,6 +1,9 @@
 import type { CurrencyCodeRecord } from "currency-codes";
 import type { JobMatch, JobPosting, MatchConfig, SalaryBand } from "../types";
 
+const SENIORITY_MATCH_BONUS = 10;
+const LOCATION_MATCH_BONUS = 5;
+
 /**
  * Extracts salary bands matching the preferred currency and returns as a single band.
  * If there are no bands in the preferred currency, returns the first available currency.
@@ -40,6 +43,20 @@ function getPreferredSalary(
   };
 }
 
+function getSeniorityBonus(posting: JobPosting, match: MatchConfig): number {
+  if (match.seniority === undefined || match.seniority.length === 0) return 0;
+
+  const postingSeniority = posting.seniority;
+  if (postingSeniority === undefined || postingSeniority === "unknown")
+    return 0;
+  const matchedRule = match.seniority.find(
+    (rule) => rule.level === postingSeniority,
+  );
+  if (matchedRule === undefined) return 0;
+
+  return matchedRule.bonus ?? SENIORITY_MATCH_BONUS;
+}
+
 export function scorePosting(
   posting: JobPosting,
   match: MatchConfig,
@@ -53,9 +70,12 @@ export function scorePosting(
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
+
   const includeKeywords = match.includeKeywords.map((x) => x.toLowerCase());
   const excludeKeywords =
     match.excludeKeywords?.map((x) => x.toLowerCase()) ?? [];
+
+  // keyword search
   const matchedKeywords = includeKeywords.filter((key) =>
     haystack.includes(key),
   );
@@ -71,6 +91,23 @@ export function scorePosting(
         filterReason: `excluded keyword "${key}"`,
       };
     }
+  }
+
+  // hard seniority filter (unknown seniority passes by default)
+  if (
+    match.seniority !== undefined &&
+    match.seniority.length > 0 &&
+    posting.seniority !== undefined &&
+    posting.seniority !== "unknown" &&
+    !match.seniority.some((rule) => rule.level === posting.seniority)
+  ) {
+    return {
+      posting,
+      score: -100,
+      matchedKeywords,
+      filtered: true,
+      filterReason: `seniority "${posting.seniority}" not allowed`,
+    };
   }
 
   // hard remote filter
@@ -111,11 +148,13 @@ export function scorePosting(
       posting.location !== undefined &&
       match.locations.includes(posting.location)
     ) {
-      locationBonus = 5;
+      locationBonus = LOCATION_MATCH_BONUS;
     }
   }
 
-  const score = matchedKeywords.length * 10 + locationBonus;
+  const seniorityBonus = getSeniorityBonus(posting, match);
+
+  const score = matchedKeywords.length * 10 + locationBonus + seniorityBonus;
   const filtered = matchedKeywords.length === 0;
 
   return {

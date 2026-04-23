@@ -1,7 +1,6 @@
 import type {
   JobMatch,
   ScanMatchResult,
-  ScanResult,
 } from "../features/scan/types";
 
 function lineForMatch(match: JobMatch, index: number): string {
@@ -10,8 +9,9 @@ function lineForMatch(match: JobMatch, index: number): string {
     match.matchedKeywords.length > 0
       ? match.matchedKeywords.join(", ")
       : "none";
+  const seniority = posting.seniority ?? "unknown";
   const freshnessMarker = posting.isNew ? " [NEW]" : "";
-  return `${index + 1}. [Score: ${match.score}]${freshnessMarker} ${posting.title} @ ${posting.company}\n   ${posting.location ?? "Unknown location"} | ${posting.url}\n   matched: ${keywords}`;
+  return `${index + 1}. [Score: ${match.score}]${freshnessMarker} ${posting.title} @ ${posting.company}\n   ${posting.location ?? "Unknown location"} | ${posting.url}\n   matched: ${keywords} | seniority: ${seniority}`;
 }
 
 export function formatScanResult(scan: ScanMatchResult): string {

@@ -1,4 +1,3 @@
-import { recordPostings } from "../../util/logging";
 import { fillAllPostingDetails } from "./pipeline/extract";
 import { rankAllMatches } from "./pipeline/rank";
 import { scanAllSources } from "./pipeline/scan";

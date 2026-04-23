@@ -51,4 +51,96 @@ describe("parseConfig", () => {
       `),
     ).toThrow("query.includeKeywords");
   });
+
+  test("parses seniority values case-insensitively", () => {
+    const config = parseConfig(`
+      match:
+        includeKeywords: [typescript]
+        seniority:
+          - level: Junior
+          - level: MID
+      sources:
+        - company: acme
+          type: greenhouse
+          boardToken: acme
+          enabled: true
+    `);
+
+    expect(config.match.seniority).toEqual([
+      { level: "junior" },
+      { level: "mid" },
+    ]);
+  });
+
+  test("throws for unsupported seniority values", () => {
+    expect(() =>
+      parseConfig(`
+      match:
+        includeKeywords: [typescript]
+        seniority:
+          - level: expert
+      sources:
+        - company: acme
+          type: greenhouse
+          boardToken: acme
+          enabled: true
+      `),
+    ).toThrow("unsupported seniority");
+  });
+
+  test("throws when seniority is not an array of rule objects", () => {
+    expect(() =>
+      parseConfig(`
+      match:
+        includeKeywords: [typescript]
+        seniority:
+          levels: [junior, mid]
+      sources:
+        - company: acme
+          type: greenhouse
+          boardToken: acme
+          enabled: true
+      `),
+    ).toThrow("match.seniority must be an array of objects");
+  });
+
+  test("parses configurable seniority bonuses", () => {
+    const config = parseConfig(`
+      match:
+        includeKeywords: [typescript]
+        seniority:
+          - level: Junior
+            bonus: 40
+          - level: mid
+            bonus: 15
+      sources:
+        - company: acme
+          type: greenhouse
+          boardToken: acme
+          enabled: true
+    `);
+
+    expect(config.match.seniority).toEqual([
+      { level: "junior", bonus: 40 },
+      { level: "mid", bonus: 15 },
+    ]);
+  });
+
+  test("throws when unknown seniority is configured in rules", () => {
+    expect(() =>
+      parseConfig(`
+      match:
+        includeKeywords: [typescript]
+        seniority:
+          - level: unknown
+            bonus: 50
+      sources:
+        - company: acme
+          type: greenhouse
+          boardToken: acme
+          enabled: true
+      `),
+    ).toThrow('"unknown" cannot be configured');
+  });
+
 });

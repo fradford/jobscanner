@@ -5,6 +5,7 @@ import type {
   OutputConfig,
   MatchConfig,
   RequestConfig,
+  Seniority,
 } from "./types";
 import {
   asBoolean,
@@ -18,6 +19,20 @@ import {
 import cc from "currency-codes";
 
 const SOURCE_TYPES = new Set(["greenhouse", "static"]);
+const SENIORITY_VALUES: ReadonlyArray<Seniority> = [
+  "intern",
+  "junior",
+  "mid",
+  "senior",
+  "staff",
+  "principal",
+  "lead",
+  "manager",
+  "director",
+  "executive",
+  "unknown",
+];
+const SENIORITY_SET = new Set<Seniority>(SENIORITY_VALUES);
 
 export async function loadConfig(
   configPath: string,
@@ -53,6 +68,7 @@ function parseMatchConfig(value: unknown): MatchConfig {
     );
 
   const excludeKeywords = asStringArray(value.excludeKeywords);
+  const seniority = parseSeniorityConfig(value.seniority);
   const locations = asStringArray(value.locations);
   const remoteOnly = asOptionalBoolean(value.remoteOnly);
   const minSalary = asOptionalNumber(value.minSalary);
@@ -63,11 +79,64 @@ function parseMatchConfig(value: unknown): MatchConfig {
   return {
     includeKeywords,
     excludeKeywords: excludeKeywords.length > 0 ? excludeKeywords : undefined,
+    seniority,
     locations: locations.length > 0 ? locations : undefined,
     remoteOnly,
     minSalary,
     preferredCurrency,
   };
+}
+
+function parseSeniorityConfig(
+  seniorityValue: unknown,
+): MatchConfig["seniority"] {
+  if (seniorityValue === undefined) return undefined;
+  if (!Array.isArray(seniorityValue)) {
+    throw new Error("Invalid config: match.seniority must be an array of objects.");
+  }
+  if (seniorityValue.length === 0) {
+    throw new Error(
+      'Invalid config: "match.seniority" must contain at least one rule.',
+    );
+  }
+
+  const seenLevels = new Set<string>();
+  return seniorityValue.map((entry, index) => {
+    if (!isRecord(entry)) {
+      throw new Error(
+        `Invalid config: match.seniority[${index}] must be an object with "level" and optional "bonus".`,
+      );
+    }
+
+    const level = parseSeniority(
+      asString(entry.level),
+      `match.seniority[${index}].level`,
+    );
+    if (level === "unknown") {
+      throw new Error(
+        `Invalid config: "unknown" cannot be configured at match.seniority[${index}].level.`,
+      );
+    }
+    if (seenLevels.has(level)) {
+      throw new Error(
+        `Invalid config: duplicate seniority level "${level}" at match.seniority[${index}].`,
+      );
+    }
+    seenLevels.add(level);
+
+    const bonus = asOptionalNumber(entry.bonus);
+    return bonus === undefined ? { level } : { level, bonus };
+  });
+}
+
+function parseSeniority(value: string, path: string): Seniority {
+  const normalized = value.toLowerCase() as Seniority;
+  if (!SENIORITY_SET.has(normalized)) {
+    throw new Error(
+      `Invalid config: unsupported seniority "${value}" at ${path}. Allowed values: ${SENIORITY_VALUES.join(", ")}.`,
+    );
+  }
+  return normalized;
 }
 
 function parseRequest(value: unknown): RequestConfig | undefined {

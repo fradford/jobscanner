@@ -27,6 +27,16 @@ bun install
   - options:
   - `--config <config-file-path>` - specify the path to the config file (default: config.yaml)
 
+## Match config tips
+
+Use `match.seniority` to filter role level precisely, instead of broad `excludeKeywords` terms like `senior` or `staff` that may also appear in descriptions.
+
+Supported `match.seniority` values:
+`intern`, `junior`, `mid`, `senior`, `staff`, `principal`, `lead`, `manager`, `director`, `executive`, `unknown`.
+
+`match.seniority` uses a list of rules with `level` and optional `bonus` (filter + per-level ranking bonus), for example:
+`[{ level: junior, bonus: 40 }, { level: mid, bonus: 15 }]`.
+
 ## Testing
 
 ```bash
