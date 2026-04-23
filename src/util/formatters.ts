@@ -31,15 +31,15 @@ function formatPostedAt(postedAt: Date, now: Date): string | undefined {
       Math.floor((now.getTime() - postedAtMs) / HOUR_IN_MS),
     );
     const hourUnit = hoursAgo === 1 ? "hour" : "hours";
-    return `posted ${hoursAgo} ${hourUnit} ago`;
+    return `${hoursAgo} ${hourUnit} ago`;
   }
 
   if (calendarDaysAgo < 30) {
     const dayUnit = calendarDaysAgo === 1 ? "day" : "days";
-    return `posted ${calendarDaysAgo} ${dayUnit} ago`;
+    return `${calendarDaysAgo} ${dayUnit} ago`;
   }
 
-  return `posted ${fullDate(postedAt)}`;
+  return fullDate(postedAt);
 }
 
 function lineForMatch(match: JobMatch, index: number, now: Date): string {
@@ -52,9 +52,22 @@ function lineForMatch(match: JobMatch, index: number, now: Date): string {
   const postedAt = posting.postedAt
     ? formatPostedAt(posting.postedAt, now)
     : undefined;
-  const postedAtSummary = postedAt ? ` | ${postedAt}` : "";
   const freshnessMarker = posting.isNew ? " [NEW]" : "";
-  return `${index + 1}. [Score: ${match.score}]${freshnessMarker} ${posting.title} @ ${posting.company}\n   ${posting.location ?? "Unknown location"} | ${posting.url}\n   matched: ${keywords} | seniority: ${seniority}${postedAtSummary}`;
+
+  const lines = [
+    `${index + 1}) ${posting.title} @ ${posting.company}${freshnessMarker}`,
+    `   score: ${match.score}`,
+    `   seniority: ${seniority}`,
+    `   location: ${posting.location ?? "Unknown location"}`,
+    `   matched: ${keywords}`,
+    `   url: ${posting.url}`,
+  ];
+
+  if (postedAt !== undefined) {
+    lines.splice(2, 0, `   posted: ${postedAt}`);
+  }
+
+  return lines.join("\n");
 }
 
 export function formatScanResult(scan: ScanMatchResult, now = new Date()): string {
@@ -69,9 +82,12 @@ export function formatScanResult(scan: ScanMatchResult, now = new Date()): strin
   }
   if (scan.matches.length > 0) {
     lines.push("");
-    scan.matches.forEach((match, index) =>
-      lines.push(lineForMatch(match, index, now)),
-    );
+    scan.matches.forEach((match, index) => {
+      lines.push(lineForMatch(match, index, now));
+      if (index < scan.matches.length - 1) {
+        lines.push("");
+      }
+    });
   }
   return lines.join("\n");
 }

@@ -3,6 +3,9 @@ import type { JobMatch } from "../src/features/scan/types";
 import { formatScanResult } from "../src/util/formatters";
 
 function match(overrides?: Partial<JobMatch>): JobMatch {
+  const postingOverrides = overrides?.posting;
+  const { posting: _posting, ...matchOverrides } = overrides ?? {};
+
   return {
     posting: {
       id: "https://example.com/jobs/1::backendengineer",
@@ -12,12 +15,12 @@ function match(overrides?: Partial<JobMatch>): JobMatch {
       company: "Acme",
       workMode: "remote",
       url: "https://example.com/jobs/1",
-      ...overrides?.posting,
+      ...postingOverrides,
     },
     score: 23,
     matchedKeywords: ["backend"],
     filtered: false,
-    ...overrides,
+    ...matchOverrides,
   };
 }
 
@@ -29,7 +32,12 @@ describe("formatScanResult", () => {
       failures: [],
     });
 
+    expect(output).toContain("1) Backend Engineer @ Acme");
+    expect(output).toContain("score: 23");
     expect(output).toContain("seniority: mid");
+    expect(output).toContain("location: Unknown location");
+    expect(output).toContain("matched: backend");
+    expect(output).toContain("url: https://example.com/jobs/1");
   });
 
   test("shows unknown when posting seniority is missing", () => {
@@ -40,7 +48,7 @@ describe("formatScanResult", () => {
     });
 
     expect(output).toContain("seniority: unknown");
-    expect(output).not.toContain("posted ");
+    expect(output).not.toContain("posted:");
   });
 
   test("shows posted hours ago for jobs posted today", () => {
@@ -54,7 +62,7 @@ describe("formatScanResult", () => {
       now,
     );
 
-    expect(output).toContain("posted 5 hours ago");
+    expect(output).toContain("posted: 5 hours ago");
   });
 
   test("shows posted days ago for jobs in the last 30 days", () => {
@@ -68,7 +76,7 @@ describe("formatScanResult", () => {
       now,
     );
 
-    expect(output).toContain("posted 3 days ago");
+    expect(output).toContain("posted: 3 days ago");
   });
 
   test("shows full date for jobs older than 30 days", () => {
@@ -82,6 +90,6 @@ describe("formatScanResult", () => {
       now,
     );
 
-    expect(output).toContain("posted 2026-03-20");
+    expect(output).toContain("posted: 2026-03-20");
   });
 });
