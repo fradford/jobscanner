@@ -95,7 +95,7 @@ export interface JobPosting {
   salaryBands?: SalaryBand[];
   url: string;
   description?: string;
-  postedAt?: string;
+  postedAt?: Date;
   isNew?: boolean;
 }
 

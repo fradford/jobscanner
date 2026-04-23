@@ -40,5 +40,48 @@ describe("formatScanResult", () => {
     });
 
     expect(output).toContain("seniority: unknown");
+    expect(output).not.toContain("posted ");
+  });
+
+  test("shows posted hours ago for jobs posted today", () => {
+    const now = new Date(2026, 3, 23, 15, 0, 0);
+    const output = formatScanResult(
+      {
+        matches: [match({ posting: { postedAt: new Date(2026, 3, 23, 10, 0, 0) } })],
+        allPostings: [],
+        failures: [],
+      },
+      now,
+    );
+
+    expect(output).toContain("posted 5 hours ago");
+  });
+
+  test("shows posted days ago for jobs in the last 30 days", () => {
+    const now = new Date(2026, 3, 23, 15, 0, 0);
+    const output = formatScanResult(
+      {
+        matches: [match({ posting: { postedAt: new Date(2026, 3, 20, 9, 0, 0) } })],
+        allPostings: [],
+        failures: [],
+      },
+      now,
+    );
+
+    expect(output).toContain("posted 3 days ago");
+  });
+
+  test("shows full date for jobs older than 30 days", () => {
+    const now = new Date(2026, 3, 23, 15, 0, 0);
+    const output = formatScanResult(
+      {
+        matches: [match({ posting: { postedAt: new Date(2026, 2, 20, 9, 0, 0) } })],
+        allPostings: [],
+        failures: [],
+      },
+      now,
+    );
+
+    expect(output).toContain("posted 2026-03-20");
   });
 });

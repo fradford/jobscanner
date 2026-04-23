@@ -53,6 +53,7 @@ export const greenhouseAdapter: SourceAdapter<GreenhouseSourceConfig> = {
           })),
           url: jobDetails.absolute_url,
           description: jobDetails.content,
+          postedAt: new Date(jobDetails.updated_at),
         };
       }),
     );
