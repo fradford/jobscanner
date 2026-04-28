@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import type { JobMatch } from "../src/features/scan/types";
-import { formatScanResult } from "../src/lib/formatters";
+import type { JobMatch } from "../features/scan/types";
+import { formatScanResult } from "../lib/formatters";
 
 function match(overrides?: Partial<JobMatch>): JobMatch {
   const postingOverrides = overrides?.posting;

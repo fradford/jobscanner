@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { parseConfig } from "../src/features/scan/parse-config";
+import { parseConfig } from "../features/scan/parse-config";
 
 describe("parseConfig", () => {
   test("parses valid config and assigns source IDs", () => {
@@ -142,5 +142,4 @@ describe("parseConfig", () => {
       `),
     ).toThrow('"unknown" cannot be configured');
   });
-
 });

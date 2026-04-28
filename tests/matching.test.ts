@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import type { JobPosting, MatchConfig } from "../src/features/scan/types";
+import type { JobPosting, MatchConfig } from "../features/scan/types";
 import {
   scoreAllPostings,
   scorePosting,
-} from "../src/features/scan/pipeline/score";
-import { rankAllMatches } from "../src/features/scan/pipeline/rank";
+} from "../features/scan/pipeline/score";
+import { rankAllMatches } from "../features/scan/pipeline/rank";
 
 const baseQuery: MatchConfig = {
   includeKeywords: ["backend", "typescript"],

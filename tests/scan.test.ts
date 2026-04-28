@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, mock, test } from "bun:test";
-import type { JobScannerConfig } from "../src/features/scan/types";
-import { runScanPipeline } from "../src/features/scan";
+import type { JobScannerConfig } from "../features/scan/types";
+import { runScanPipeline } from "../features/scan";
 
 const originalFetch = globalThis.fetch;
 

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { fillPostingDetails } from "../src/features/scan/pipeline/extract";
-import type { JobPosting } from "../src/features/scan/types";
+import { fillPostingDetails } from "../features/scan/pipeline/extract";
+import type { JobPosting } from "../features/scan/types";
 
 function posting(overrides: Partial<JobPosting>): JobPosting {
   return {

@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, mock, test } from "bun:test";
-import { ResumeBuilder } from "../src/features/resume/resume-builder";
+import { ResumeBuilder } from "../features/resume/resume-builder";
 import {
   buildResume,
   parseResumeContent,
-} from "../src/features/resume/build-resume";
-import type { ResumeData } from "../src/features/resume/types";
+} from "../features/resume/build-resume";
+import type { ResumeData } from "../features/resume/types";
 
 afterEach(() => {
   mock.restore();

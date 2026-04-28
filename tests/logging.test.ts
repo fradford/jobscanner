@@ -2,8 +2,8 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { recordPostings, loadPostingIds } from "../src/lib/logging";
-import type { JobMatch } from "../src/features/scan/types";
+import { recordPostings, loadPostingIds } from "../lib/logging";
+import type { JobMatch } from "../features/scan/types";
 
 const tempDirs: string[] = [];
 

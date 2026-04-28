@@ -9,9 +9,6 @@ import { escapeLatex } from "../../lib/formatters";
 import latex from "node-latex";
 import { createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
-import { send } from "node:process";
-import { format } from "node:path/win32";
-import { isExportSpecifier } from "typescript";
 
 export class CoverLetterBuilder {
   private data: CoverLetterData;
