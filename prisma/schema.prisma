@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Seniority {
+  INTERN
+  ENTRY
+  MID
+  SENIOR
+  EXECUTIVE
+}
+
+enum WorkMode {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum ApplicationStatus {
+  APPLIED
+  REJECTED
+  INTERVIEWING
+  STALE
+}
+
+model JobPost {
+  id          Int             @id @default(autoincrement())
+  sourceId    String?
+  title       String
+  company     String
+  location    String?
+  workMode    WorkMode?
+  seniority   Seniority?
+  salaryBands SalaryBand[]
+  url         String
+  description String
+  postedAt    DateTime?
+  match       JobScore?
+  application JobApplication?
+}
+
+model SalaryBand {
+  id       Int     @id @default(autoincrement())
+  job      JobPost @relation(fields: [jobId], references: [id])
+  jobId    Int
+  bottom   Int
+  top      Int
+  currency String
+}
+
+model JobScore {
+  id               Int       @id @default(autoincrement())
+  job              JobPost   @relation(fields: [jobId], references: [id])
+  jobId            Int       @unique
+  score            Int
+  positiveKeywords Keyword[] @relation(name: "positiveKeywordMatch")
+  negativeKeywords Keyword[] @relation(name: "negativeKeywordMatch")
+  seniority        Boolean
+  location         Boolean
+  salary           Boolean
+}
+
+model Keyword {
+  id              Int       @id @default(autoincrement())
+  value           String
+  positiveMatch   JobScore? @relation(name: "positiveKeywordMatch", fields: [positiveMatchId], references: [id])
+  positiveMatchId Int?
+  negativeMatch   JobScore? @relation(name: "negativeKeywordMatch", fields: [negativeMatchId], references: [id])
+  negativeMatchId Int?
+}
+
+model JobApplication {
+  id     Int               @id @default(autoincrement())
+  job    JobPost           @relation(fields: [jobId], references: [id])
+  jobId  Int               @unique
+  status ApplicationStatus
+}

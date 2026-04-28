@@ -144,3 +144,9 @@ config/*.yml
 
 # Output files
 output/**
+
+# Prisma Client
+/generated/prisma
+
+# SQLite Db
+*.db
