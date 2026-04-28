@@ -79,10 +79,14 @@ yargs(hideBin(process.argv))
     },
   )
   .command(
-    "resume <output>",
+    "resume <data> <output>",
     "Creates a resume",
     (command) =>
       command
+        .positional("data", {
+          type: "string",
+          describe: "Input file path, structured resume content (yaml|yml)",
+        })
         .positional("output", {
           type: "string",
           describe: "Output file path, e.g. 'output/resume.pdf'",
@@ -92,11 +96,6 @@ yargs(hideBin(process.argv))
           default: "templates/resume.tex",
           describe:
             "Path to resume tex template, must define macros as in default file",
-        })
-        .option("data", {
-          type: "string",
-          default: "config/default-resume.yaml",
-          describe: "Path to structured resume content file (yaml|yml)",
         })
         .option("sections", {
           type: "array",
@@ -111,8 +110,8 @@ yargs(hideBin(process.argv))
           describe: "Customise the included sections (and their order).",
         }),
     async (argv) => {
-      if (argv.output === undefined)
-        throw new Error("Missing positional arument 'output'");
+      if (argv.data === undefined || argv.output === undefined)
+        throw new Error("Missing positional arument!");
 
       const resumeData = await loadResume(argv.data);
       await buildResume(resumeData, {
@@ -123,18 +122,18 @@ yargs(hideBin(process.argv))
     },
   )
   .command(
-    "letter <output>",
+    "letter <data> <output>",
     "Creates a cover letter",
     (command) =>
       command
+        .positional("data", {
+          type: "string",
+          describe:
+            "Input file path, structured cover letter content (yaml|yml)",
+        })
         .positional("output", {
           type: "string",
           describe: "Output file path, e.g 'output/letter.pdf'",
-        })
-        .option("data", {
-          type: "string",
-          default: "config/default-letter.yaml",
-          describe: "Path to structured cover letter content file (yaml|yml)",
         })
         .option("template", {
           type: "string",
@@ -143,11 +142,12 @@ yargs(hideBin(process.argv))
         })
         .option("signature", {
           type: "string",
+          default: "~/signature.png",
           describe: "Path to signature image file",
         }),
     async (argv) => {
-      if (argv.output === undefined)
-        throw new Error("Missing positional argument 'output'");
+      if (argv.data === undefined || argv.output === undefined)
+        throw new Error("Missing positional argument!");
 
       const letterData = await loadCoverLetter(argv.data);
       await buildCoverLetter(letterData, {

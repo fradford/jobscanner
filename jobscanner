@@ -1,3 +1,4 @@
 #!/bin/bash
 
+# If you move this file somewhere else, update the path to index.ts
 exec "$HOME/.bun/bin/bun" "./index.ts" "$@"
