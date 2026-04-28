@@ -1,13 +1,13 @@
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { loadConfig } from "./features/scan/parse-config";
-import { formatScanResult } from "./util/formatters";
+import { formatScanResult } from "./lib/formatters";
 import {
   loadPostingIds,
   recordFailures,
   recordMatches,
   recordPostings,
-} from "./util/logging";
+} from "./lib/logging";
 import { AllSourcesFailedError } from "./features/scan/types";
 import { buildResume, loadResume } from "./features/resume/build-resume";
 import { type ResumeSection } from "./features/resume/types";

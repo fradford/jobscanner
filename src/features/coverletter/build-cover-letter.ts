@@ -11,7 +11,7 @@ import {
   asOptionalStringArray,
   asString,
   isRecord,
-} from "../../util/type-utils";
+} from "../../lib/type-utils";
 import { CoverLetterBuilder } from "./cover-letter-builder";
 
 // these functions are basically just for debugging

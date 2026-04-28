@@ -1,7 +1,7 @@
 import type { GreenhouseSourceConfig, JobPosting } from "../types";
 import type { SourceAdapter } from "./types";
 import cc, { type CurrencyCodeRecord } from "currency-codes";
-import { sanitizeString } from "../../../util/formatters";
+import { sanitizeString } from "../../../lib/formatters";
 
 interface GreenhouseJobsDTO {
   jobs: Array<{

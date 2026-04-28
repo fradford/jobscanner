@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createFetchContext } from "../src/util/context";
+import { createFetchContext } from "../src/lib/context";
 
 describe("createFetchContext", () => {
   test("merges request overrides", () => {

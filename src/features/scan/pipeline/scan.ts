@@ -1,4 +1,4 @@
-import { createFetchContext } from "../../../util/context";
+import { createFetchContext } from "../../../lib/context";
 import { dispatchAdapter } from "../adapters";
 import {
   AllSourcesFailedError,

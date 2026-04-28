@@ -7,7 +7,7 @@ import {
   asString,
   asStringArray,
   isRecord,
-} from "../../util/type-utils";
+} from "../../lib/type-utils";
 import type {
   EducationRecord,
   ExperienceRecord,

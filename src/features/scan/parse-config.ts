@@ -15,7 +15,7 @@ import {
   asString,
   asStringArray,
   isRecord,
-} from "../../util/type-utils";
+} from "../../lib/type-utils";
 import cc from "currency-codes";
 
 const SOURCE_TYPES = new Set(["greenhouse", "static"]);
@@ -92,7 +92,9 @@ function parseSeniorityConfig(
 ): MatchConfig["seniority"] {
   if (seniorityValue === undefined) return undefined;
   if (!Array.isArray(seniorityValue)) {
-    throw new Error("Invalid config: match.seniority must be an array of objects.");
+    throw new Error(
+      "Invalid config: match.seniority must be an array of objects.",
+    );
   }
   if (seniorityValue.length === 0) {
     throw new Error(

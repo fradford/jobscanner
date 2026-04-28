@@ -10,7 +10,7 @@ import type {
   ResumeData,
   ResumeSection,
 } from "./types";
-import { escapeLatex } from "../../util/formatters";
+import { escapeLatex } from "../../lib/formatters";
 
 export class ResumeBuilder {
   private data: ResumeData;

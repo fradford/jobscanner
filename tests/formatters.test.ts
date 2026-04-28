@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { JobMatch } from "../src/features/scan/types";
-import { formatScanResult } from "../src/util/formatters";
+import { formatScanResult } from "../src/lib/formatters";
 
 function match(overrides?: Partial<JobMatch>): JobMatch {
   const postingOverrides = overrides?.posting;
@@ -55,7 +55,9 @@ describe("formatScanResult", () => {
     const now = new Date(2026, 3, 23, 15, 0, 0);
     const output = formatScanResult(
       {
-        matches: [match({ posting: { postedAt: new Date(2026, 3, 23, 10, 0, 0) } })],
+        matches: [
+          match({ posting: { postedAt: new Date(2026, 3, 23, 10, 0, 0) } }),
+        ],
         allPostings: [],
         failures: [],
       },
@@ -69,7 +71,9 @@ describe("formatScanResult", () => {
     const now = new Date(2026, 3, 23, 15, 0, 0);
     const output = formatScanResult(
       {
-        matches: [match({ posting: { postedAt: new Date(2026, 3, 20, 9, 0, 0) } })],
+        matches: [
+          match({ posting: { postedAt: new Date(2026, 3, 20, 9, 0, 0) } }),
+        ],
         allPostings: [],
         failures: [],
       },
@@ -83,7 +87,9 @@ describe("formatScanResult", () => {
     const now = new Date(2026, 3, 23, 15, 0, 0);
     const output = formatScanResult(
       {
-        matches: [match({ posting: { postedAt: new Date(2026, 2, 20, 9, 0, 0) } })],
+        matches: [
+          match({ posting: { postedAt: new Date(2026, 2, 20, 9, 0, 0) } }),
+        ],
         allPostings: [],
         failures: [],
       },

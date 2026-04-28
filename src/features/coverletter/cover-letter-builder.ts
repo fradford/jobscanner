@@ -5,7 +5,7 @@ import type {
   StreetAddress,
 } from "./types";
 import { file } from "bun";
-import { escapeLatex } from "../../util/formatters";
+import { escapeLatex } from "../../lib/formatters";
 import latex from "node-latex";
 import { createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
